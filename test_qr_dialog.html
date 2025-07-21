@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Dialog Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f0f0;
+        }
+        .test-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #1557b0;
+        }
+        .test-url {
+            margin-top: 10px;
+        }
+        .test-url input {
+            width: 400px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-top: 0;
+        }
+        .info {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-controls">
+        <h1>Upload QR Dialog Tester</h1>
+        <p class="info">이 페이지는 업로드 완료 후 표시되는 QR 다이얼로그를 테스트하기 위한 페이지입니다.</p>
+        
+        <div class="test-url">
+            <input type="text" id="testUrl" value="https://drive.google.com/uc?export=download&id=1234567890abcdef" placeholder="테스트할 Google Drive URL">
+            <button onclick="showDialog()">다이얼로그 표시</button>
+            <button onclick="hideDialog()">다이얼로그 숨기기</button>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button onclick="showWithSampleUrl1()">샘플 URL 1</button>
+            <button onclick="showWithSampleUrl2()">샘플 URL 2 (긴 URL)</button>
+            <button onclick="simulateUpload()">업로드 시뮬레이션</button>
+            <button onclick="testSpinner()">스피너 테스트</button>
+            <button onclick="testFullFlow()">전체 플로우 테스트</button>
+        </div>
+    </div>
+
+    <!-- Load upload QR dialog -->
+    <script src="upload_qr_dialog.js"></script>
+    
+    <script>
+        function showDialog() {
+            const url = document.getElementById('testUrl').value;
+            if (url) {
+                window.showUploadQRDialog(url);
+            } else {
+                alert('URL을 입력해주세요');
+            }
+        }
+        
+        function hideDialog() {
+            const dialog = document.getElementById('veo-upload-qr-dialog');
+            if (dialog) {
+                dialog.remove();
+            }
+        }
+        
+        function showWithSampleUrl1() {
+            window.showUploadQRDialog('https://drive.google.com/uc?export=download&id=1BxQ2xP3yV4wZ5xY6yZ7a8b9c0d1e2f3g4');
+        }
+        
+        function showWithSampleUrl2() {
+            // Long URL to test wrapping
+            window.showUploadQRDialog('https://drive.google.com/uc?export=download&id=1aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+        }
+        
+        function simulateUpload() {
+            // Simulate an upload complete event
+            console.log('Simulating upload completion...');
+            window.postMessage({
+                type: 'veo-upload-complete',
+                link: 'https://drive.google.com/uc?export=download&id=simulated_' + Date.now()
+            }, '*');
+        }
+        
+        function testSpinner() {
+            // Test the loading spinner
+            window.testUploadSpinner();
+        }
+        
+        function testFullFlow() {
+            // Test full flow: spinner -> QR dialog
+            window.testUploadSpinner();
+            setTimeout(() => {
+                window.showUploadQRDialog('https://drive.google.com/uc?export=download&id=test_' + Date.now());
+            }, 3000);
+        }
+        
+        // Also test the window.testUploadQR function if it exists
+        if (window.testUploadQR) {
+            console.log('testUploadQR function is available');
+        }
+    </script>
+</body>
+</html>
