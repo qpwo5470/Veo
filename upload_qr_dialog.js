@@ -213,60 +213,30 @@ window.showUploadLoadingSpinner = function(downloadButton) {
     spinnerContainer.appendChild(loadingText);
     content.appendChild(spinnerContainer);
     
-    // Add close button
-    const closeBtn = document.createElement('button');
-    closeBtn.style.cssText = `
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        width: 32px;
-        height: 32px;
-        border: none;
-        background: transparent;
-        color: #5f6368;
-        font-size: 20px;
-        cursor: pointer;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.2s;
-    `;
-    closeBtn.innerHTML = '✕';
-    closeBtn.onmouseover = () => {
-        closeBtn.style.background = 'rgba(0, 0, 0, 0.08)';
-    };
-    closeBtn.onmouseout = () => {
-        closeBtn.style.background = 'transparent';
-    };
-    closeBtn.onclick = () => {
-        dialog.remove();
-        currentDialog = null;
-    };
-    
-    content.appendChild(closeBtn);
+    // NO close button - spinner cannot be closed by user
     dialog.appendChild(content);
     document.body.appendChild(dialog);
     
     currentDialog = dialog;
     
-    // Close on background click
+    // Prevent closing on background click
     dialog.onclick = (e) => {
         if (e.target === dialog) {
-            dialog.remove();
-            currentDialog = null;
+            e.preventDefault();
+            e.stopPropagation();
+            // Do nothing - spinner must remain visible
         }
     };
     
-    // Close on Escape key
+    // Prevent closing on Escape key
     const handleEscape = (e) => {
         if (e.key === 'Escape') {
-            dialog.remove();
-            currentDialog = null;
-            document.removeEventListener('keydown', handleEscape);
+            e.preventDefault();
+            e.stopPropagation();
+            // Do nothing - spinner must remain visible
         }
     };
-    document.addEventListener('keydown', handleEscape);
+    document.addEventListener('keydown', handleEscape, true);  // Use capture phase to intercept early
     
     // Add spinner animation
     const style = document.createElement('style');
