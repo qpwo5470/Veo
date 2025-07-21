@@ -567,15 +567,37 @@ window.addEventListener('message', (event) => {
     }
 });
 
-// Also check for upload data periodically
+// Check for upload data - optimized to reduce failed requests
+let activeUploadPort = null;
+let consecutiveFailures = 0;
+
 async function checkForUploadComplete() {
-    // Try multiple ports since the server might be on different ports
-    const ports = [8889, 8890, 8891, 8892];
+    // Stop checking after too many failures
+    if (consecutiveFailures > 10) {
+        if (window.uploadCheckInterval) {
+            clearInterval(window.uploadCheckInterval);
+            window.uploadCheckInterval = null;
+        }
+        return;
+    }
+    
+    // Use known working port if available, otherwise try all
+    const ports = activeUploadPort ? [activeUploadPort] : [8890];  // Start with most common port
+    
+    let foundServer = false;
     
     for (const port of ports) {
         try {
-            const response = await fetch(`http://localhost:${port}/latest_upload.json?` + Date.now());
+            const response = await fetch(`http://localhost:${port}/latest_upload.json?` + Date.now(), {
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-cache',
+                signal: AbortSignal.timeout(1000)  // 1 second timeout
+            });
             if (response.ok) {
+                foundServer = true;
+                consecutiveFailures = 0;
+                activeUploadPort = port;
                 const data = await response.json();
                 // Fetched upload data
                 if (data.timestamp) {
@@ -628,8 +650,25 @@ if (window.uploadCheckInterval) {
     clearInterval(window.uploadCheckInterval);
 }
 
-// Check every 1 second for faster response
-window.uploadCheckInterval = setInterval(checkForUploadComplete, 1000);
+// DISABLED automatic checking to prevent console spam
+// Only check when download is actually triggered
+// window.uploadCheckInterval = setInterval(checkForUploadComplete, 1000);
+
+// Instead, only start checking when a download is detected
+window.startUploadMonitoring = function() {
+    if (!window.uploadCheckInterval) {
+        window.uploadCheckInterval = setInterval(checkForUploadComplete, 2000);  // Check every 2 seconds
+        checkForUploadComplete();  // Check immediately
+        
+        // Auto-stop after 60 seconds to prevent infinite checking
+        setTimeout(() => {
+            if (window.uploadCheckInterval) {
+                clearInterval(window.uploadCheckInterval);
+                window.uploadCheckInterval = null;
+            }
+        }, 60000);
+    }
+};
 
 // Clean up on page unload
 window.addEventListener('beforeunload', () => {

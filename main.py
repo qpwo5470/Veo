@@ -16,6 +16,15 @@ import threading
 import atexit
 from flow_mode_changer import wait_and_change_mode
 
+# Suppress WebDriver logging on Windows
+os.environ['WDM_LOG_LEVEL'] = '0'
+os.environ['WDM_PRINT_FIRST_LINE'] = 'False'
+
+# Suppress Selenium logging
+import logging
+logging.getLogger('selenium').setLevel(logging.WARNING)
+logging.getLogger('urllib3').setLevel(logging.WARNING)
+
 # Global variables
 drive_server_process = None
 oauth_service = None
@@ -133,6 +142,12 @@ def setup_driver():
     
     # Disable download bubble
     chrome_options.add_argument('--disable-features=DownloadBubble,DownloadBubbleV2')
+    
+    # Reduce console logging
+    chrome_options.add_argument('--log-level=3')  # Only show fatal errors
+    chrome_options.add_argument('--silent')
+    chrome_options.add_argument('--disable-logging')
+    chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
     
     if platform.system() == 'Windows':
         chrome_options.add_argument('--disable-gpu')
@@ -285,11 +300,26 @@ def show_pg1(driver):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     pg1_path = os.path.join(current_dir, 'pg1.html')
     driver.get(f"file:///{pg1_path}")
+    # Re-inject console filter on navigation
+    inject_console_filters(driver)
 
 def show_pg2(driver):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     pg2_path = os.path.join(current_dir, 'pg2.html')
     driver.get(f"file:///{pg2_path}")
+    # Re-inject console filter on navigation
+    inject_console_filters(driver)
+
+def inject_console_filters(driver):
+    """Inject console filters to suppress network logs"""
+    try:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        early_filter_path = os.path.join(current_dir, 'early_console_filter.js')
+        if os.path.exists(early_filter_path):
+            with open(early_filter_path, 'r', encoding='utf-8') as f:
+                driver.execute_script(f.read())
+    except:
+        pass
 
 
 def setup_download_qr_interceptor(driver):
@@ -302,7 +332,15 @@ def setup_download_qr_interceptor(driver):
         # Get current directory
         current_dir = os.path.dirname(os.path.abspath(__file__))
         
-        # Add console filter first to suppress fetch logs
+        # Add EARLY console filter first to suppress ALL network logs
+        early_filter_path = os.path.join(current_dir, 'early_console_filter.js')
+        if os.path.exists(early_filter_path):
+            with open(early_filter_path, 'r', encoding='utf-8') as f:
+                early_filter_script = f.read()
+            driver.execute_script(early_filter_script)
+            print("Early console filter configured - aggressive network log suppression")
+        
+        # Then add regular console filter as backup
         console_filter_path = os.path.join(current_dir, 'console_filter.js')
         if os.path.exists(console_filter_path):
             with open(console_filter_path, 'r', encoding='utf-8') as f:
@@ -682,6 +720,15 @@ def main():
         
         if login_to_google(driver, email, password):
             print("Starting application flow...")
+            
+            # Inject early console filter IMMEDIATELY
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            early_filter_path = os.path.join(current_dir, 'early_console_filter.js')
+            if os.path.exists(early_filter_path):
+                with open(early_filter_path, 'r', encoding='utf-8') as f:
+                    early_filter_script = f.read()
+                driver.execute_script(early_filter_script)
+                print("Early console filter injected globally")
             
             # Setup download QR interceptor globally
             setup_download_qr_interceptor(driver)
