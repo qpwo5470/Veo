@@ -440,20 +440,37 @@ def setup_download_qr_interceptor(driver):
             driver.execute_script(refresh_blocker_script)
             print("Refresh blocker configured - F5 and Ctrl/Cmd+R disabled")
         
-        # Add static home button
-        home_button_static_path = os.path.join(current_dir, 'home_button_static.js')
-        if os.path.exists(home_button_static_path):
-            with open(home_button_static_path, 'r', encoding='utf-8') as f:
-                home_button_script = f.read()
-            driver.execute_script(home_button_script)
-            print("Static home button configured - no continuous monitoring")
         
+        
+        # Add performance debugging tools if requested
+        if '--debug-performance' in sys.argv:
+            perf_monitor_path = os.path.join(current_dir, 'performance_monitor.js')
+            if os.path.exists(perf_monitor_path):
+                with open(perf_monitor_path, 'r', encoding='utf-8') as f:
+                    perf_script = f.read()
+                driver.execute_script(perf_script)
+                print("Performance monitor loaded - Reports every 10 seconds")
+            
+            script_profiler_path = os.path.join(current_dir, 'script_profiler.js')
+            if os.path.exists(script_profiler_path):
+                with open(script_profiler_path, 'r', encoding='utf-8') as f:
+                    profiler_script = f.read()
+                driver.execute_script(profiler_script)
+                print("Script profiler loaded - Tracks execution times")
+            
+            cpu_detector_path = os.path.join(current_dir, 'cpu_detector.js')
+            if os.path.exists(cpu_detector_path):
+                with open(cpu_detector_path, 'r', encoding='utf-8') as f:
+                    cpu_script = f.read()
+                driver.execute_script(cpu_script)
+                print("CPU detector loaded - Identifies performance bottlenecks")
         
         print("Press Alt+D to test QR overlay")
         print("Developer tools: Run with --devtools flag to enable")
         print("Debug downloads: Run with --debug-downloads flag")
         print("Debug chat deletion: Run with --debug-chat flag")
         print("Debug video finder: Run with --debug-video flag")
+        print("Debug performance: Run with --debug-performance flag")
         print("Kiosk mode: Run with --kiosk flag to test full kiosk mode")
         
     except Exception as e:
@@ -548,13 +565,6 @@ def monitor_navigation(driver, credentials):
                         driver.execute_script(logo_hider_script)
                         print("Injected efficient logo hider for sketch page")
                     
-                    # Inject static home button for sketch page
-                    home_button_static_path = os.path.join(current_dir, 'home_button_static.js')
-                    if os.path.exists(home_button_static_path):
-                        with open(home_button_static_path, 'r', encoding='utf-8') as f:
-                            home_button_script = f.read()
-                        driver.execute_script(home_button_script)
-                        print("Injected static home button for sketch page")
                     
                     sketch_clicked = True
                     
@@ -671,6 +681,15 @@ def main():
             
             # Setup download QR interceptor globally
             setup_download_qr_interceptor(driver)
+            
+            # Inject smart home button
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            home_button_smart_path = os.path.join(current_dir, 'home_button_smart.js')
+            if os.path.exists(home_button_smart_path):
+                with open(home_button_smart_path, 'r', encoding='utf-8') as f:
+                    home_button_script = f.read()
+                driver.execute_script(home_button_script)
+                print("Smart home button injected - will show on all Veo pages")
             
             show_pg1(driver)
             
