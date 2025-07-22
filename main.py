@@ -357,6 +357,15 @@ def setup_download_qr_interceptor(driver):
         # Get current directory
         current_dir = os.path.dirname(os.path.abspath(__file__))
         
+        # Add innerHTML patcher for Windows Trusted Types
+        if platform.system() == 'Windows':
+            patcher_path = os.path.join(current_dir, 'innerHTML_patcher.js')
+            if os.path.exists(patcher_path):
+                with open(patcher_path, 'r', encoding='utf-8') as f:
+                    patcher_script = f.read()
+                driver.execute_script(patcher_script)
+                print("innerHTML patcher applied for Windows Trusted Types")
+        
         # Add EARLY console filter first to suppress ALL network logs
         early_filter_path = os.path.join(current_dir, 'early_console_filter.js')
         if os.path.exists(early_filter_path):
@@ -754,8 +763,19 @@ def main():
         if login_to_google(driver, email, password):
             print("Starting application flow...")
             
-            # Inject early console filter IMMEDIATELY
+            # Inject early fixes IMMEDIATELY
             current_dir = os.path.dirname(os.path.abspath(__file__))
+            
+            # Fix innerHTML for Windows Trusted Types first
+            if platform.system() == 'Windows':
+                patcher_path = os.path.join(current_dir, 'innerHTML_patcher.js')
+                if os.path.exists(patcher_path):
+                    with open(patcher_path, 'r', encoding='utf-8') as f:
+                        patcher_script = f.read()
+                    driver.execute_script(patcher_script)
+                    print("innerHTML patcher injected early for Windows")
+            
+            # Then inject console filter
             early_filter_path = os.path.join(current_dir, 'early_console_filter.js')
             if os.path.exists(early_filter_path):
                 with open(early_filter_path, 'r', encoding='utf-8') as f:
