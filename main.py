@@ -354,22 +354,15 @@ def setup_download_qr_interceptor(driver):
         # Mode changing is now handled in Python when navigating to Flow page
         # No need for JavaScript mode changers here
         
-        # Add Flow mode selector v2
-        mode_selector_path = os.path.join(current_dir, 'flow_mode_selector_v2.js')
-        if os.path.exists(mode_selector_path):
-            with open(mode_selector_path, 'r', encoding='utf-8') as f:
-                mode_selector_script = f.read()
-            driver.execute_script(mode_selector_script)
-            print("Flow mode selector v2 configured - will auto-select requested mode")
         
         
-        # Add optimized upload monitor (provides startUploadMonitoring)
-        optimized_monitor_path = os.path.join(current_dir, 'optimized_upload_monitor.js')
-        if os.path.exists(optimized_monitor_path):
-            with open(optimized_monitor_path, 'r', encoding='utf-8') as f:
+        # Add multi-port upload monitor (provides startUploadMonitoring)
+        multiport_monitor_path = os.path.join(current_dir, 'upload_monitor_multiport.js')
+        if os.path.exists(multiport_monitor_path):
+            with open(multiport_monitor_path, 'r', encoding='utf-8') as f:
                 monitor_script = f.read()
             driver.execute_script(monitor_script)
-            print("Optimized upload monitor configured - minimal resource usage")
+            print("Multi-port upload monitor configured - Windows compatible")
         
         # Add upload QR dialog handler (depends on upload monitor)
         upload_qr_path = os.path.join(current_dir, 'upload_qr_dialog.js')
@@ -387,13 +380,13 @@ def setup_download_qr_interceptor(driver):
             driver.execute_script(download_monitor_script)
             print("Optimized download monitor loaded - minimal overhead")
         
-        # Add persistent logo hider
-        logo_hider_path = os.path.join(current_dir, 'persistent_logo_hider.js')
+        # Add efficient logo hider
+        logo_hider_path = os.path.join(current_dir, 'logo_hider_efficient.js')
         if os.path.exists(logo_hider_path):
             with open(logo_hider_path, 'r', encoding='utf-8') as f:
                 logo_hider_script = f.read()
             driver.execute_script(logo_hider_script)
-            print("Persistent logo hider configured - will continuously hide Google Cloud logo")
+            print("Efficient logo hider configured - CSS-only solution")
         
         # Add efficient quality filter
         efficient_quality_path = os.path.join(current_dir, 'efficient_quality_filter.js')
@@ -411,13 +404,6 @@ def setup_download_qr_interceptor(driver):
             driver.execute_script(chat_deleter_script)
             print("Chat deleter configured - will delete chats before going home")
         
-        # Add fixed Veo 2 selector
-        veo2_fixed_path = os.path.join(current_dir, 'veo2_selector_fixed.js')
-        if os.path.exists(veo2_fixed_path):
-            with open(veo2_fixed_path, 'r', encoding='utf-8') as f:
-                veo2_script = f.read()
-            driver.execute_script(veo2_script)
-            print("Fixed Veo 2 selector configured - will select Veo 2 - Quality")
         
         # Add debug chat deleter if requested
         if '--debug-chat' in sys.argv:
@@ -437,6 +423,15 @@ def setup_download_qr_interceptor(driver):
                 driver.execute_script(debug_video_script)
                 print("Debug video finder loaded - use window.debugVideoFinder() in console")
         
+        # Add Windows QR debug if on Windows
+        if platform.system() == 'Windows':
+            debug_qr_path = os.path.join(current_dir, 'debug_qr_windows.js')
+            if os.path.exists(debug_qr_path):
+                with open(debug_qr_path, 'r', encoding='utf-8') as f:
+                    debug_qr_script = f.read()
+                driver.execute_script(debug_qr_script)
+                print("Windows QR debug loaded - Press Alt+Q to debug")
+        
         # Add refresh blocker
         refresh_blocker_path = os.path.join(current_dir, 'refresh_blocker.js')
         if os.path.exists(refresh_blocker_path):
@@ -445,15 +440,13 @@ def setup_download_qr_interceptor(driver):
             driver.execute_script(refresh_blocker_script)
             print("Refresh blocker configured - F5 and Ctrl/Cmd+R disabled")
         
-        # Add safe home button injector
-        home_button_safe_path = os.path.join(current_dir, 'home_button_injector_safe.js')
-        if os.path.exists(home_button_safe_path):
-            # Set the base path first
-            driver.execute_script(f"window.veoBasePath = '{current_dir}';")
-            with open(home_button_safe_path, 'r', encoding='utf-8') as f:
+        # Add static home button
+        home_button_static_path = os.path.join(current_dir, 'home_button_static.js')
+        if os.path.exists(home_button_static_path):
+            with open(home_button_static_path, 'r', encoding='utf-8') as f:
                 home_button_script = f.read()
             driver.execute_script(home_button_script)
-            print("Safe home button injector configured - will add home button to external pages")
+            print("Static home button configured - no continuous monitoring")
         
         
         print("Press Alt+D to test QR overlay")
@@ -470,13 +463,13 @@ def hide_flow_ui_elements(driver):
     """Hide UI elements in Google Flow interface"""
     try:
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        ui_hider_path = os.path.join(current_dir, 'flow_ui_hider_aggressive.js')
+        ui_hider_path = os.path.join(current_dir, 'flow_ui_hider_minimal.js')
         
         if os.path.exists(ui_hider_path):
             with open(ui_hider_path, 'r', encoding='utf-8') as f:
                 hide_script = f.read()
             driver.execute_script(hide_script)
-            print("UI elements hidden (aggressive mode)")
+            print("UI elements hidden (minimal CSS)")
         
     except Exception as e:
         print(f"Error hiding UI elements: {e}")
@@ -526,14 +519,6 @@ def monitor_navigation(driver, credentials):
                             # Clear the hash from URL
                             driver.execute_script("history.replaceState(null, '', window.location.pathname + window.location.search);")
                             
-                            # Inject fixed Veo 2 selector for asset mode
-                            current_dir = os.path.dirname(os.path.abspath(__file__))
-                            veo2_fixed_path = os.path.join(current_dir, 'veo2_selector_fixed.js')
-                            if os.path.exists(veo2_fixed_path):
-                                with open(veo2_fixed_path, 'r', encoding='utf-8') as f:
-                                    veo2_selector_script = f.read()
-                                driver.execute_script(veo2_selector_script)
-                                print("[NAVIGATION] Fixed Veo 2 selector injected for asset mode")
                         else:
                             print("[NAVIGATION] \u2717 Failed to change mode")
                     elif requested_mode == 'text':
@@ -541,11 +526,8 @@ def monitor_navigation(driver, credentials):
                     else:
                         print(f"[NAVIGATION] No mode change needed (requested: '{requested_mode}')")
                     
-                    # Setup download QR interceptor
-                    print("[NAVIGATION] Setting up download QR interceptor...")
-                    setup_download_qr_interceptor(driver)
-                    
-                    # Hide UI elements
+                    # Only inject scripts that haven't been injected globally
+                    # Hide UI elements (this needs to run per page)
                     print("[NAVIGATION] Hiding UI elements...")
                     hide_flow_ui_elements(driver)
                     
@@ -557,23 +539,22 @@ def monitor_navigation(driver, credentials):
                     print("Navigated to Sketch to Video page...")
                     time.sleep(2)
                     
-                    # Inject persistent logo hider for sketch page
+                    # Inject efficient logo hider for sketch page
                     current_dir = os.path.dirname(os.path.abspath(__file__))
-                    logo_hider_path = os.path.join(current_dir, 'persistent_logo_hider.js')
+                    logo_hider_path = os.path.join(current_dir, 'logo_hider_efficient.js')
                     if os.path.exists(logo_hider_path):
                         with open(logo_hider_path, 'r', encoding='utf-8') as f:
                             logo_hider_script = f.read()
                         driver.execute_script(logo_hider_script)
-                        print("Injected logo hider for sketch page")
+                        print("Injected efficient logo hider for sketch page")
                     
-                    # Inject safe home button for sketch page
-                    home_button_safe_path = os.path.join(current_dir, 'home_button_injector_safe.js')
-                    if os.path.exists(home_button_safe_path):
-                        driver.execute_script(f"window.veoBasePath = '{current_dir}';")
-                        with open(home_button_safe_path, 'r', encoding='utf-8') as f:
+                    # Inject static home button for sketch page
+                    home_button_static_path = os.path.join(current_dir, 'home_button_static.js')
+                    if os.path.exists(home_button_static_path):
+                        with open(home_button_static_path, 'r', encoding='utf-8') as f:
                             home_button_script = f.read()
                         driver.execute_script(home_button_script)
-                        print("Injected safe home button for sketch page")
+                        print("Injected static home button for sketch page")
                     
                     sketch_clicked = True
                     
