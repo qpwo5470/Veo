@@ -89,6 +89,18 @@
             width: auto;
             height: 200px;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+        }
+        
+        .button-wrapper {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
         
         
@@ -135,6 +147,32 @@
                 return false;
             }
         }, true);
+        
+        // Prevent drag on all images and button wrappers
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prevent drag on images
+            const images = document.querySelectorAll('img');
+            images.forEach(img => {
+                img.draggable = false;
+                img.addEventListener('dragstart', function(e) {
+                    e.preventDefault();
+                    return false;
+                });
+            });
+            
+            // Prevent drag on button wrappers
+            const buttons = document.querySelectorAll('.button-wrapper');
+            buttons.forEach(btn => {
+                btn.addEventListener('dragstart', function(e) {
+                    e.preventDefault();
+                    return false;
+                });
+                btn.addEventListener('selectstart', function(e) {
+                    e.preventDefault();
+                    return false;
+                });
+            });
+        });
         
         // Embed the project URL directly
         const FLOW_PROJECT_URL = 'https://labs.google/fx/ko/tools/flow/project/0ed009de-b58e-4a12-877b-fdae52c11aae';
