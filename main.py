@@ -439,14 +439,31 @@ def setup_download_qr_interceptor(driver):
                 driver.execute_script(debug_video_script)
                 print("Debug video finder loaded - use window.debugVideoFinder() in console")
         
-        # Add Windows QR debug if on Windows
+        # Add Windows-specific fixes
         if platform.system() == 'Windows':
+            # QR debug
             debug_qr_path = os.path.join(current_dir, 'debug_qr_windows.js')
             if os.path.exists(debug_qr_path):
                 with open(debug_qr_path, 'r', encoding='utf-8') as f:
                     debug_qr_script = f.read()
                 driver.execute_script(debug_qr_script)
                 print("Windows QR debug loaded - Press Alt+Q to debug")
+            
+            # Performance patches
+            perf_patch_path = os.path.join(current_dir, 'windows_performance_patch.js')
+            if os.path.exists(perf_patch_path):
+                with open(perf_patch_path, 'r', encoding='utf-8') as f:
+                    perf_patch_script = f.read()
+                driver.execute_script(perf_patch_script)
+                print("Windows performance patch loaded - Framework lag mitigation active")
+            
+            # Framework performance monitor
+            framework_fix_path = os.path.join(current_dir, 'framework_performance_fix.js')
+            if os.path.exists(framework_fix_path):
+                with open(framework_fix_path, 'r', encoding='utf-8') as f:
+                    framework_script = f.read()
+                driver.execute_script(framework_script)
+                print("Framework performance monitor loaded")
         
         # Add refresh blocker
         refresh_blocker_path = os.path.join(current_dir, 'refresh_blocker.js')
