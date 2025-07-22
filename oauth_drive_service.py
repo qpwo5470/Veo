@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """OAuth-based Google Drive service that uses user's account"""
 
 import os
@@ -47,7 +48,7 @@ class OAuthDriveService:
         # OAuth configuration - load from res/drive_oauth.json
         oauth_file = os.path.join(os.path.dirname(__file__), 'res', 'drive_oauth.json')
         if os.path.exists(oauth_file):
-            with open(oauth_file, 'r') as f:
+            with open(oauth_file, 'r', encoding='utf-8') as f:
                 self.client_config = json.load(f)
         else:
             print(f"ERROR: OAuth credentials not found at {oauth_file}")
@@ -82,7 +83,7 @@ class OAuthDriveService:
                         return False
                 
                 # Save the credentials for next run
-                with open(self.token_file, 'w') as token:
+                with open(self.token_file, 'w', encoding='utf-8') as token:
                     token.write(self.credentials.to_json())
             
             # Build service
@@ -497,7 +498,7 @@ class OAuthDriveService:
         """Update JavaScript handler with correct port"""
         js_file = os.path.join(os.path.dirname(__file__), 'auto_upload_handler.js')
         if os.path.exists(js_file):
-            with open(js_file, 'r') as f:
+            with open(js_file, 'r', encoding='utf-8') as f:
                 content = f.read()
             
             # Update port in URL
@@ -505,7 +506,7 @@ class OAuthDriveService:
             
             # Write to temporary file
             temp_file = js_file + '.tmp'
-            with open(temp_file, 'w') as f:
+            with open(temp_file, 'w', encoding='utf-8') as f:
                 f.write(content)
             
             # Use in memory instead of modifying file
