@@ -12,6 +12,8 @@ import hashlib
 import http.server
 import socketserver
 import urllib.parse
+import platform
+import sys
 
 try:
     from google.auth.transport.requests import Request
@@ -204,11 +206,22 @@ class OAuthDriveService:
         
         # Start temporary server on the correct port
         try:
-            with socketserver.TCPServer(('localhost', port), AuthHandler) as httpd:
-                print(f"Waiting for authentication on port {port}...")
+            # Use Windows-safe server on Windows
+            if platform.system() == 'Windows':
+                class WindowsAuthServer(socketserver.TCPServer):
+                    def handle_error(self, request, client_address):
+                        exc_type = sys.exc_info()[0]
+                        if exc_type in [ConnectionAbortedError, ConnectionResetError]:
+                            return
+                        super().handle_error(request, client_address)
                 
-                # Wait for one request
-                httpd.handle_request()
+                with WindowsAuthServer(('localhost', port), AuthHandler) as httpd:
+                    print(f"Waiting for authentication on port {port}...")
+                    httpd.handle_request()
+            else:
+                with socketserver.TCPServer(('localhost', port), AuthHandler) as httpd:
+                    print(f"Waiting for authentication on port {port}...")
+                    httpd.handle_request()
         except OSError as e:
             print(f"Error: Could not start server on port {port}")
             print("Make sure no other application is using this port")
@@ -481,7 +494,24 @@ class OAuthDriveService:
             # Use only port 8888
             port = 8888
             try:
-                self.web_server = socketserver.TCPServer(('localhost', port), UploadDataHandler)
+                # Create custom server class for Windows error handling
+                if platform.system() == 'Windows':
+                    class WindowsTCPServer(socketserver.TCPServer):
+                        def handle_error(self, request, client_address):
+                            """Suppress Windows connection abort errors"""
+                            exc_type, exc_value = sys.exc_info()[:2]
+                            if exc_type == ConnectionAbortedError:
+                                # Ignore - browser closed connection
+                                return
+                            if hasattr(exc_value, 'errno') and exc_value.errno in [10053, 10054]:
+                                # Windows: connection abort/reset
+                                return
+                            super().handle_error(request, client_address)
+                    
+                    self.web_server = WindowsTCPServer(('localhost', port), UploadDataHandler)
+                else:
+                    self.web_server = socketserver.TCPServer(('localhost', port), UploadDataHandler)
+                
                 self.web_port = port
                 print(f"📡 Web server started on http://localhost:{port}")
                 
