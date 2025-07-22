@@ -302,6 +302,14 @@ def show_pg1(driver):
     driver.get(f"file:///{pg1_path}")
     # Re-inject console filter on navigation
     inject_console_filters(driver)
+    
+    # Force inject home button
+    home_button_force_path = os.path.join(current_dir, 'home_button_force.js')
+    if os.path.exists(home_button_force_path):
+        with open(home_button_force_path, 'r', encoding='utf-8') as f:
+            home_button_script = f.read()
+        driver.execute_script(home_button_script)
+        print("[PG1] 홈버튼 주입")
 
 def show_pg2(driver):
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -309,6 +317,14 @@ def show_pg2(driver):
     driver.get(f"file:///{pg2_path}")
     # Re-inject console filter on navigation
     inject_console_filters(driver)
+    
+    # Force inject home button
+    home_button_force_path = os.path.join(current_dir, 'home_button_force.js')
+    if os.path.exists(home_button_force_path):
+        with open(home_button_force_path, 'r', encoding='utf-8') as f:
+            home_button_script = f.read()
+        driver.execute_script(home_button_script)
+        print("[PG2] 홈버튼 주입")
 
 def inject_console_filters(driver):
     """Inject console filters to suppress network logs"""
@@ -372,13 +388,13 @@ def setup_download_qr_interceptor(driver):
             driver.execute_script(upload_qr_script)
             print("Upload QR dialog configured - will show QR code after Google Drive uploads")
         
-        # Load optimized download monitor (which uses showUploadLoadingSpinner)
-        optimized_download_path = os.path.join(current_dir, 'optimized_download_monitor.js')
-        if os.path.exists(optimized_download_path):
-            with open(optimized_download_path, 'r', encoding='utf-8') as f:
+        # Load fixed download monitor (which uses showUploadLoadingSpinner)
+        download_monitor_path = os.path.join(current_dir, 'download_monitor_fixed.js')
+        if os.path.exists(download_monitor_path):
+            with open(download_monitor_path, 'r', encoding='utf-8') as f:
                 download_monitor_script = f.read()
             driver.execute_script(download_monitor_script)
-            print("Optimized download monitor loaded - minimal overhead")
+            print("Fixed download monitor loaded - will show spinner for all qualities")
         
         # Add efficient logo hider
         logo_hider_path = os.path.join(current_dir, 'logo_hider_efficient.js')
@@ -388,13 +404,13 @@ def setup_download_qr_interceptor(driver):
             driver.execute_script(logo_hider_script)
             print("Efficient logo hider configured - CSS-only solution")
         
-        # Add efficient quality filter
-        efficient_quality_path = os.path.join(current_dir, 'efficient_quality_filter.js')
-        if os.path.exists(efficient_quality_path):
-            with open(efficient_quality_path, 'r', encoding='utf-8') as f:
-                quality_script = f.read()
-            driver.execute_script(quality_script)
-            print("Efficient quality filter configured")
+        # Add working fix for spinner and quality
+        working_fix_path = os.path.join(current_dir, 'working_fix.js')
+        if os.path.exists(working_fix_path):
+            with open(working_fix_path, 'r', encoding='utf-8') as f:
+                working_script = f.read()
+            driver.execute_script(working_script)
+            print("Working fix loaded - Non-invasive quality filter and spinner")
         
         # Add chat deleter script
         chat_deleter_path = os.path.join(current_dir, 'chat_deleter.js')
@@ -465,12 +481,22 @@ def setup_download_qr_interceptor(driver):
                 driver.execute_script(cpu_script)
                 print("CPU detector loaded - Identifies performance bottlenecks")
         
+        # Add comprehensive debug if requested
+        if '--debug-issues' in sys.argv:
+            debug_all_path = os.path.join(current_dir, 'debug_all_issues.js')
+            if os.path.exists(debug_all_path):
+                with open(debug_all_path, 'r', encoding='utf-8') as f:
+                    debug_script = f.read()
+                driver.execute_script(debug_script)
+                print("Comprehensive debug loaded - Check console for detailed logs")
+        
         print("Press Alt+D to test QR overlay")
         print("Developer tools: Run with --devtools flag to enable")
         print("Debug downloads: Run with --debug-downloads flag")
         print("Debug chat deletion: Run with --debug-chat flag")
         print("Debug video finder: Run with --debug-video flag")
         print("Debug performance: Run with --debug-performance flag")
+        print("Debug issues: Run with --debug-issues flag")
         print("Kiosk mode: Run with --kiosk flag to test full kiosk mode")
         
     except Exception as e:
@@ -506,6 +532,23 @@ def monitor_navigation(driver, credentials):
             
             # Check if URL changed
             if new_url != current_url:
+                # Force inject home button on any navigation
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                home_button_force_path = os.path.join(current_dir, 'home_button_force.js')
+                if os.path.exists(home_button_force_path):
+                    with open(home_button_force_path, 'r', encoding='utf-8') as f:
+                        home_button_script = f.read()
+                    driver.execute_script(home_button_script)
+                    print(f"[NAVIGATION] 홈버튼 강제 주입: {new_url[:50]}...")
+                
+                # Re-inject working fix on Flow pages
+                if "labs.google/fx/ko/tools/flow" in new_url:
+                    working_fix_path = os.path.join(current_dir, 'working_fix.js')
+                    if os.path.exists(working_fix_path):
+                        with open(working_fix_path, 'r', encoding='utf-8') as f:
+                            working_script = f.read()
+                        driver.execute_script(working_script)
+                        print("[NAVIGATION] Working fix 재주입")
                 # Check if navigating to Google Flow project page directly
                 if "labs.google/fx/ko/tools/flow" in new_url and not flow_clicked:
                     print("\n" + "#" * 60)
@@ -682,14 +725,14 @@ def main():
             # Setup download QR interceptor globally
             setup_download_qr_interceptor(driver)
             
-            # Inject smart home button
+            # Inject force home button globally
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            home_button_smart_path = os.path.join(current_dir, 'home_button_smart.js')
-            if os.path.exists(home_button_smart_path):
-                with open(home_button_smart_path, 'r', encoding='utf-8') as f:
+            home_button_force_path = os.path.join(current_dir, 'home_button_force.js')
+            if os.path.exists(home_button_force_path):
+                with open(home_button_force_path, 'r', encoding='utf-8') as f:
                     home_button_script = f.read()
                 driver.execute_script(home_button_script)
-                print("Smart home button injected - will show on all Veo pages")
+                print("홈버튼 강제 주입 시스템 활성화")
             
             show_pg1(driver)
             
