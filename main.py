@@ -371,13 +371,29 @@ def setup_download_qr_interceptor(driver):
             print("Flow mode selector v2 configured - will auto-select requested mode")
         
         
-        # Add upload QR dialog handler FIRST (before simple_download_monitor)
+        # Add efficient upload monitor FIRST (provides startUploadMonitoring)
+        efficient_monitor_path = os.path.join(current_dir, 'efficient_upload_monitor.js')
+        if os.path.exists(efficient_monitor_path):
+            with open(efficient_monitor_path, 'r', encoding='utf-8') as f:
+                efficient_monitor_script = f.read()
+            driver.execute_script(efficient_monitor_script)
+            print("Efficient upload monitor configured - optimized upload detection")
+        
+        # Add upload QR dialog handler (depends on efficient monitor)
         upload_qr_path = os.path.join(current_dir, 'upload_qr_dialog.js')
         if os.path.exists(upload_qr_path):
             with open(upload_qr_path, 'r', encoding='utf-8') as f:
                 upload_qr_script = f.read()
             driver.execute_script(upload_qr_script)
             print("Upload QR dialog configured - will show QR code after Google Drive uploads")
+        
+        # Add efficient upload monitor FIRST
+        efficient_monitor_path = os.path.join(current_dir, 'efficient_upload_monitor.js')
+        if os.path.exists(efficient_monitor_path):
+            with open(efficient_monitor_path, 'r', encoding='utf-8') as f:
+                efficient_monitor_script = f.read()
+            driver.execute_script(efficient_monitor_script)
+            print("Efficient upload monitor configured - using exponential backoff")
         
         # NOW load the full simple download monitor (which uses showUploadLoadingSpinner)
         simple_monitor_path = os.path.join(current_dir, 'simple_download_monitor.js')
@@ -410,6 +426,22 @@ def setup_download_qr_interceptor(driver):
                 chat_deleter_script = f.read()
             driver.execute_script(chat_deleter_script)
             print("Chat deleter configured - will delete chats before going home")
+        
+        # Add Veo 2 model selector v2 (will only activate in asset mode)
+        veo2_selector_v2_path = os.path.join(current_dir, 'veo2_model_selector_v2.js')
+        if os.path.exists(veo2_selector_v2_path):
+            with open(veo2_selector_v2_path, 'r', encoding='utf-8') as f:
+                veo2_selector_script = f.read()
+            driver.execute_script(veo2_selector_script)
+            print("Veo 2 model selector v2 configured - will auto-select in asset mode")
+        else:
+            # Fallback to v1
+            veo2_selector_path = os.path.join(current_dir, 'veo2_model_selector.js')
+            if os.path.exists(veo2_selector_path):
+                with open(veo2_selector_path, 'r', encoding='utf-8') as f:
+                    veo2_selector_script = f.read()
+                driver.execute_script(veo2_selector_script)
+                print("Veo 2 model selector configured - will auto-select in asset mode")
         
         # Add debug chat deleter if requested
         if '--debug-chat' in sys.argv:
@@ -568,6 +600,15 @@ def monitor_navigation(driver, credentials):
                             print("[NAVIGATION] \u2713 Mode changed successfully")
                             # Clear the hash from URL
                             driver.execute_script("history.replaceState(null, '', window.location.pathname + window.location.search);")
+                            
+                            # Inject Veo 2 model selector v2 for asset mode
+                            current_dir = os.path.dirname(os.path.abspath(__file__))
+                            veo2_selector_v2_path = os.path.join(current_dir, 'veo2_model_selector_v2.js')
+                            if os.path.exists(veo2_selector_v2_path):
+                                with open(veo2_selector_v2_path, 'r', encoding='utf-8') as f:
+                                    veo2_selector_script = f.read()
+                                driver.execute_script(veo2_selector_script)
+                                print("[NAVIGATION] Veo 2 model selector v2 injected for asset mode")
                         else:
                             print("[NAVIGATION] \u2717 Failed to change mode")
                     elif requested_mode == 'text':

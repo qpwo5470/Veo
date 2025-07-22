@@ -537,82 +537,11 @@ window.addEventListener('message', (event) => {
     }
 });
 
-// Check for upload data - optimized to reduce failed requests
-let activeUploadPort = null;
-let consecutiveFailures = 0;
-
+// DEPRECATED - Using efficient_upload_monitor.js instead
+// This function is kept for compatibility but should not be used
 async function checkForUploadComplete() {
-    // Stop checking after too many failures
-    if (consecutiveFailures > 10) {
-        if (window.uploadCheckInterval) {
-            clearInterval(window.uploadCheckInterval);
-            window.uploadCheckInterval = null;
-        }
-        return;
-    }
-    
-    // Use known working port if available, otherwise try all
-    const ports = activeUploadPort ? [activeUploadPort] : [8890];  // Start with most common port
-    
-    let foundServer = false;
-    
-    for (const port of ports) {
-        try {
-            const response = await fetch(`http://localhost:${port}/latest_upload.json?` + Date.now(), {
-                method: 'GET',
-                mode: 'cors',
-                cache: 'no-cache',
-                signal: AbortSignal.timeout(1000)  // 1 second timeout
-            });
-            if (response.ok) {
-                foundServer = true;
-                consecutiveFailures = 0;
-                activeUploadPort = port;
-                const data = await response.json();
-                // Fetched upload data
-                if (data.timestamp) {
-                    // Create unique key for this upload
-                    const uploadKey = `${data.timestamp}_${data.link || 'loading'}`;
-                    
-                    // Check if user has dismissed this upload
-                    if (dismissedUploads.has(uploadKey)) {
-                        // User dismissed this upload
-                        return;
-                    }
-                    
-                    // Check if we've already shown this upload
-                    if (!shownUploads.has(uploadKey)) {
-                        // Check if this is a recent event (within last 30 seconds)
-                        const uploadTime = new Date(data.timestamp);
-                        const now = new Date();
-                        const timeDiff = (now - uploadTime) / 1000; // seconds
-                        // Time diff check
-                        
-                        if (timeDiff < 30) {  // Show uploads from last 30 seconds
-                            shownUploads.add(uploadKey);
-                            lastShownUploadKey = uploadKey;
-                            
-                            if (data.loading) {
-                                // New upload starting - showing spinner
-                                window.showUploadLoadingSpinner();
-                            } else if (data.link) {
-                                // New upload detected
-                                window.showUploadQRDialog(data.link);
-                            }
-                        } else {
-                            // Upload too old
-                        }
-                    } else {
-                        // Already shown this upload
-                    }
-                }
-                // Found working server, no need to try other ports
-                return;
-            }
-        } catch (error) {
-            // Try next port
-        }
-    }
+    // Do nothing - replaced by efficient monitor
+    return;
 }
 
 // Clear any existing interval before creating new one
@@ -624,21 +553,13 @@ if (window.uploadCheckInterval) {
 // Only check when download is actually triggered
 // window.uploadCheckInterval = setInterval(checkForUploadComplete, 1000);
 
-// Instead, only start checking when a download is detected
-window.startUploadMonitoring = function() {
-    if (!window.uploadCheckInterval) {
-        window.uploadCheckInterval = setInterval(checkForUploadComplete, 2000);  // Check every 2 seconds
-        checkForUploadComplete();  // Check immediately
-        
-        // Auto-stop after 60 seconds to prevent infinite checking
-        setTimeout(() => {
-            if (window.uploadCheckInterval) {
-                clearInterval(window.uploadCheckInterval);
-                window.uploadCheckInterval = null;
-            }
-        }, 60000);
-    }
-};
+// DEPRECATED - startUploadMonitoring is now provided by efficient_upload_monitor.js
+// This is kept for compatibility only
+if (!window.startUploadMonitoring) {
+    window.startUploadMonitoring = function() {
+        console.log('[UPLOAD] Legacy monitoring called - should use efficient monitor');
+    };
+}
 
 // Clean up on page unload
 window.addEventListener('beforeunload', () => {
