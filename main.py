@@ -472,14 +472,14 @@ def setup_download_qr_interceptor(driver):
             driver.execute_script(home_button_script)
             print("Home button injector configured - will add home button to external pages")
         
-        # Add framework function blocker for Windows
+        # Add aggressive framework function blocker for Windows
         if platform.system() == 'Windows':
-            framework_blocker_path = os.path.join(current_dir, 'framework_function_blocker.js')
-            if os.path.exists(framework_blocker_path):
-                with open(framework_blocker_path, 'r', encoding='utf-8') as f:
+            aggressive_blocker_path = os.path.join(current_dir, 'aggressive_framework_blocker.js')
+            if os.path.exists(aggressive_blocker_path):
+                with open(aggressive_blocker_path, 'r', encoding='utf-8') as f:
                     blocker_script = f.read()
                 driver.execute_script(blocker_script)
-                print("Framework function blocker loaded - will block functions >200ms")
+                print("Aggressive framework blocker loaded - targeting _0x4fef57 and similar functions")
         
         print("Press Alt+D to test QR overlay")
         print("Developer tools: Run with --devtools flag to enable")
@@ -762,6 +762,15 @@ def main():
                     early_filter_script = f.read()
                 driver.execute_script(early_filter_script)
                 print("Early console filter injected globally")
+            
+            # Inject aggressive framework blocker early for Windows
+            if platform.system() == 'Windows':
+                aggressive_blocker_path = os.path.join(current_dir, 'aggressive_framework_blocker.js')
+                if os.path.exists(aggressive_blocker_path):
+                    with open(aggressive_blocker_path, 'r', encoding='utf-8') as f:
+                        blocker_script = f.read()
+                    driver.execute_script(blocker_script)
+                    print("Aggressive framework blocker injected early - will catch _0x4fef57")
             
             # Setup download QR interceptor globally
             setup_download_qr_interceptor(driver)
