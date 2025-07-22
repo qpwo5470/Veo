@@ -313,7 +313,32 @@ def show_pg1(driver):
 
 def show_pg2(driver):
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    pg2_path = os.path.join(current_dir, 'pg2.html')
+    
+    # Read the template and inject the project URL
+    template_path = os.path.join(current_dir, 'pg2_template.html')
+    if os.path.exists(template_path):
+        # Load credentials to get project URL
+        credentials = load_credentials()
+        flow_project_url = credentials.get('flow_project_url', '')
+        
+        # Read template and replace placeholder
+        with open(template_path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        # Replace the placeholder with actual URL
+        html_content = html_content.replace('{{FLOW_PROJECT_URL}}', flow_project_url)
+        
+        # Write to temporary pg2.html
+        pg2_path = os.path.join(current_dir, 'pg2.html')
+        with open(pg2_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        print(f"[PG2] Generated pg2.html with project URL: {flow_project_url[:50]}...")
+    else:
+        # Fallback to existing pg2.html if template not found
+        pg2_path = os.path.join(current_dir, 'pg2.html')
+        print("[PG2] Using existing pg2.html (template not found)")
+    
     driver.get(f"file:///{pg2_path}")
     # Re-inject console filter on navigation
     inject_console_filters(driver)
@@ -464,6 +489,14 @@ def setup_download_qr_interceptor(driver):
                     framework_script = f.read()
                 driver.execute_script(framework_script)
                 print("Framework performance monitor loaded")
+            
+            # Extreme performance fix for _0xe2830d
+            extreme_fix_path = os.path.join(current_dir, 'extreme_performance_fix.js')
+            if os.path.exists(extreme_fix_path):
+                with open(extreme_fix_path, 'r', encoding='utf-8') as f:
+                    extreme_script = f.read()
+                driver.execute_script(extreme_script)
+                print("Extreme performance fix loaded - targeting _0xe2830d function")
         
         # Add refresh blocker
         refresh_blocker_path = os.path.join(current_dir, 'refresh_blocker.js')

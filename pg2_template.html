@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veo - Page 2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('res/pg2/p2_bg.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .home-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            background: #4285F4;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .home-button:hover {
+            background: #3367D6;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .home-button svg {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 80px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        
+        .button-wrapper {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .button-wrapper:hover {
+            transform: scale(1.05);
+        }
+        
+        .button-wrapper:active {
+            transform: scale(0.95);
+        }
+        
+        .button-wrapper img {
+            display: block;
+            width: auto;
+            height: 200px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+        
+        
+        @media (max-width: 768px) {
+            .buttons-container {
+                flex-direction: column;
+                gap: 40px;
+            }
+            
+            .button-wrapper img {
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="home-button" onclick="goToHome()" title="Go to Home">
+            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill: none; stroke: white; stroke-width: 2;">
+                <path d="M12 2.1L2 10v11h7v-7h6v7h7V10L12 2.1z"/>
+            </svg>
+        </button>
+        
+        <div class="buttons-container">
+            <div class="button-wrapper" onclick="goToSketch()">
+                <img src="res/pg2/sketch_btn.png" alt="Sketch">
+            </div>
+            
+            <div class="button-wrapper" onclick="goToText()">
+                <img src="res/pg2/text_btn.png" alt="Text">
+            </div>
+            
+            <div class="button-wrapper" onclick="goToImage()">
+                <img src="res/pg2/image_btn.png" alt="Image">
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Block refresh
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key === 'r')) {
+                e.preventDefault();
+                return false;
+            }
+        }, true);
+        
+        // Project URL will be injected by Python
+        const FLOW_PROJECT_URL = '{{FLOW_PROJECT_URL}}';
+        
+        function goToHome() {
+            window.location.href = 'pg1.html';
+        }
+        
+        function goToSketch() {
+            window.location.href = 'https://gcdemos-25-int-dreamstudio.uc.r.appspot.com/';
+        }
+        
+        function goToText() {
+            // Navigate with mode in URL hash
+            console.log('[PG2] Navigating to Flow in text mode');
+            window.location.href = FLOW_PROJECT_URL + '#veo_mode=text';
+        }
+        
+        function goToImage() {
+            // Navigate with mode in URL hash
+            console.log('[PG2] Navigating to Flow in asset mode');
+            window.location.href = FLOW_PROJECT_URL + '#veo_mode=asset';
+        }
+        
+        document.addEventListener('keydown', function(event) {
+            switch(event.key) {
+                case '1':
+                    goToSketch();
+                    break;
+                case '2':
+                    goToText();
+                    break;
+                case '3':
+                    goToImage();
+                    break;
+                case 'Escape':
+                    goToHome();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
