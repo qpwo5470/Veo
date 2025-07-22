@@ -142,11 +142,6 @@ document.addEventListener('click', function(e) {
                 window.showUploadLoadingSpinner(lastClickedDownloadButton);
             }
             
-            // Start monitoring for upload completion
-            if (typeof window.startUploadMonitoring === 'function') {
-                window.startUploadMonitoring();
-            }
-            
             // Reset flag after timeout
             setTimeout(() => {
                 window._expectingDownload = false;

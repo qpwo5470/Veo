@@ -1,52 +1,11 @@
-// Chat deletion script for Google Flow with dark overlay
-
-// Create dark overlay
-function createDarkOverlay() {
-    const overlay = document.createElement('div');
-    overlay.id = 'veo-deletion-overlay';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 999998;
-        opacity: 0;
-        transition: opacity 0.3s ease-in-out;
-        pointer-events: none;
-    `;
-    
-    document.body.appendChild(overlay);
-    
-    // Fade in
-    setTimeout(() => {
-        overlay.style.opacity = '1';
-    }, 10);
-    
-    return overlay;
-}
-
-// Remove dark overlay
-function removeDarkOverlay() {
-    const overlay = document.getElementById('veo-deletion-overlay');
-    if (overlay) {
-        overlay.style.opacity = '0';
-        setTimeout(() => {
-            overlay.remove();
-        }, 500);
-    }
-}
-
+// Chat deletion script for Google Flow
+// Chat deletion script for Google Flow
 
 async function deleteAllChats() {
     return new Promise(async (resolve) => {
         let deletionCount = 0;
         let attempts = 0;
         const maxAttempts = 50; // Prevent infinite loops
-        
-        // Create dark overlay when starting deletion
-        createDarkOverlay();
         
         async function deleteNextChat() {
             attempts++;
@@ -128,24 +87,15 @@ window.deleteAllChatsAndGoHome = async function() {
         const deletedCount = await deleteAllChats();
         // Chat deletion completed
         
-        // Remove overlay after a short delay
-        setTimeout(() => {
-            removeDarkOverlay();
-        }, 500);
-        
         // Signal to Python that deletion is complete and ready to go home
-        setTimeout(() => {
-            const navSignal = document.createElement('div');
-            navSignal.id = 'veo-chats-deleted-go-home';
-            navSignal.style.display = 'none';
-            navSignal.setAttribute('data-timestamp', Date.now());
-            document.body.appendChild(navSignal);
-        }, 1000);
+        const navSignal = document.createElement('div');
+        navSignal.id = 'veo-chats-deleted-go-home';
+        navSignal.style.display = 'none';
+        navSignal.setAttribute('data-timestamp', Date.now());
+        document.body.appendChild(navSignal);
         
     } catch (error) {
         // Error during deletion
-        removeDarkOverlay();
-        
         // Go home anyway
         const navSignal = document.createElement('div');
         navSignal.id = 'veo-chats-deleted-go-home';
@@ -154,4 +104,4 @@ window.deleteAllChatsAndGoHome = async function() {
     }
 };
 
-// Chat deletion functions ready with dark overlay
+// Chat deletion functions ready

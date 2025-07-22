@@ -302,14 +302,6 @@ def show_pg1(driver):
     driver.get(f"file:///{pg1_path}")
     # Re-inject console filter on navigation
     inject_console_filters(driver)
-    
-    # Force inject home button
-    home_button_force_path = os.path.join(current_dir, 'home_button_force.js')
-    if os.path.exists(home_button_force_path):
-        with open(home_button_force_path, 'r', encoding='utf-8') as f:
-            home_button_script = f.read()
-        driver.execute_script(home_button_script)
-        print("[PG1] 홈버튼 주입")
 
 def show_pg2(driver):
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -342,14 +334,6 @@ def show_pg2(driver):
     driver.get(f"file:///{pg2_path}")
     # Re-inject console filter on navigation
     inject_console_filters(driver)
-    
-    # Force inject home button
-    home_button_force_path = os.path.join(current_dir, 'home_button_force.js')
-    if os.path.exists(home_button_force_path):
-        with open(home_button_force_path, 'r', encoding='utf-8') as f:
-            home_button_script = f.read()
-        driver.execute_script(home_button_script)
-        print("[PG2] 홈버튼 주입")
 
 def inject_console_filters(driver):
     """Inject console filters to suppress network logs"""
@@ -373,13 +357,21 @@ def setup_download_qr_interceptor(driver):
         # Get current directory
         current_dir = os.path.dirname(os.path.abspath(__file__))
         
-        # Add lightweight console filter
-        lightweight_filter_path = os.path.join(current_dir, 'lightweight_console_filter.js')
-        if os.path.exists(lightweight_filter_path):
-            with open(lightweight_filter_path, 'r', encoding='utf-8') as f:
-                filter_script = f.read()
-            driver.execute_script(filter_script)
-            print("Lightweight console filter configured")
+        # Add EARLY console filter first to suppress ALL network logs
+        early_filter_path = os.path.join(current_dir, 'early_console_filter.js')
+        if os.path.exists(early_filter_path):
+            with open(early_filter_path, 'r', encoding='utf-8') as f:
+                early_filter_script = f.read()
+            driver.execute_script(early_filter_script)
+            print("Early console filter configured - aggressive network log suppression")
+        
+        # Then add regular console filter as backup
+        console_filter_path = os.path.join(current_dir, 'console_filter.js')
+        if os.path.exists(console_filter_path):
+            with open(console_filter_path, 'r', encoding='utf-8') as f:
+                console_filter_script = f.read()
+            driver.execute_script(console_filter_script)
+            print("Console filter configured - fetch logs suppressed")
         
         # Add debug monitor if requested
         if '--debug-downloads' in sys.argv:
@@ -395,17 +387,16 @@ def setup_download_qr_interceptor(driver):
         # Mode changing is now handled in Python when navigating to Flow page
         # No need for JavaScript mode changers here
         
+        # Add Flow mode selector v2
+        mode_selector_path = os.path.join(current_dir, 'flow_mode_selector_v2.js')
+        if os.path.exists(mode_selector_path):
+            with open(mode_selector_path, 'r', encoding='utf-8') as f:
+                mode_selector_script = f.read()
+            driver.execute_script(mode_selector_script)
+            print("Flow mode selector v2 configured - will auto-select requested mode")
         
         
-        # Add multi-port upload monitor (provides startUploadMonitoring)
-        multiport_monitor_path = os.path.join(current_dir, 'upload_monitor_multiport.js')
-        if os.path.exists(multiport_monitor_path):
-            with open(multiport_monitor_path, 'r', encoding='utf-8') as f:
-                monitor_script = f.read()
-            driver.execute_script(monitor_script)
-            print("Multi-port upload monitor configured - Windows compatible")
-        
-        # Add upload QR dialog handler (depends on upload monitor)
+        # Add upload QR dialog handler FIRST (before simple_download_monitor)
         upload_qr_path = os.path.join(current_dir, 'upload_qr_dialog.js')
         if os.path.exists(upload_qr_path):
             with open(upload_qr_path, 'r', encoding='utf-8') as f:
@@ -413,29 +404,29 @@ def setup_download_qr_interceptor(driver):
             driver.execute_script(upload_qr_script)
             print("Upload QR dialog configured - will show QR code after Google Drive uploads")
         
-        # Load fixed download monitor (which uses showUploadLoadingSpinner)
-        download_monitor_path = os.path.join(current_dir, 'download_monitor_fixed.js')
-        if os.path.exists(download_monitor_path):
-            with open(download_monitor_path, 'r', encoding='utf-8') as f:
-                download_monitor_script = f.read()
-            driver.execute_script(download_monitor_script)
-            print("Fixed download monitor loaded - will show spinner for all qualities")
+        # NOW load the full simple download monitor (which uses showUploadLoadingSpinner)
+        simple_monitor_path = os.path.join(current_dir, 'simple_download_monitor.js')
+        if os.path.exists(simple_monitor_path):
+            with open(simple_monitor_path, 'r', encoding='utf-8') as f:
+                simple_monitor_script = f.read()
+            driver.execute_script(simple_monitor_script)
+            print("Simple download monitor loaded - will show spinner on download button click")
         
-        # Add efficient logo hider
-        logo_hider_path = os.path.join(current_dir, 'logo_hider_efficient.js')
+        # Add persistent logo hider
+        logo_hider_path = os.path.join(current_dir, 'persistent_logo_hider.js')
         if os.path.exists(logo_hider_path):
             with open(logo_hider_path, 'r', encoding='utf-8') as f:
                 logo_hider_script = f.read()
             driver.execute_script(logo_hider_script)
-            print("Efficient logo hider configured - CSS-only solution")
+            print("Persistent logo hider configured - will continuously hide Google Cloud logo")
         
-        # Add working fix for spinner and quality
-        working_fix_path = os.path.join(current_dir, 'working_fix.js')
-        if os.path.exists(working_fix_path):
-            with open(working_fix_path, 'r', encoding='utf-8') as f:
-                working_script = f.read()
-            driver.execute_script(working_script)
-            print("Working fix loaded - Non-invasive quality filter and spinner")
+        # Add quality filter to hide 270p and 1080p options
+        quality_filter_path = os.path.join(current_dir, 'quality_filter.js')
+        if os.path.exists(quality_filter_path):
+            with open(quality_filter_path, 'r', encoding='utf-8') as f:
+                quality_filter_script = f.read()
+            driver.execute_script(quality_filter_script)
+            print("Quality filter configured - 270p and 1080p options will be hidden")
         
         # Add chat deleter script
         chat_deleter_path = os.path.join(current_dir, 'chat_deleter.js')
@@ -444,7 +435,6 @@ def setup_download_qr_interceptor(driver):
                 chat_deleter_script = f.read()
             driver.execute_script(chat_deleter_script)
             print("Chat deleter configured - will delete chats before going home")
-        
         
         # Add debug chat deleter if requested
         if '--debug-chat' in sys.argv:
@@ -464,40 +454,6 @@ def setup_download_qr_interceptor(driver):
                 driver.execute_script(debug_video_script)
                 print("Debug video finder loaded - use window.debugVideoFinder() in console")
         
-        # Add Windows-specific fixes
-        if platform.system() == 'Windows':
-            # QR debug
-            debug_qr_path = os.path.join(current_dir, 'debug_qr_windows.js')
-            if os.path.exists(debug_qr_path):
-                with open(debug_qr_path, 'r', encoding='utf-8') as f:
-                    debug_qr_script = f.read()
-                driver.execute_script(debug_qr_script)
-                print("Windows QR debug loaded - Press Alt+Q to debug")
-            
-            # Performance patches
-            perf_patch_path = os.path.join(current_dir, 'windows_performance_patch.js')
-            if os.path.exists(perf_patch_path):
-                with open(perf_patch_path, 'r', encoding='utf-8') as f:
-                    perf_patch_script = f.read()
-                driver.execute_script(perf_patch_script)
-                print("Windows performance patch loaded - Framework lag mitigation active")
-            
-            # Framework performance monitor
-            framework_fix_path = os.path.join(current_dir, 'framework_performance_fix.js')
-            if os.path.exists(framework_fix_path):
-                with open(framework_fix_path, 'r', encoding='utf-8') as f:
-                    framework_script = f.read()
-                driver.execute_script(framework_script)
-                print("Framework performance monitor loaded")
-            
-            # Extreme performance fix for _0xe2830d
-            extreme_fix_path = os.path.join(current_dir, 'extreme_performance_fix.js')
-            if os.path.exists(extreme_fix_path):
-                with open(extreme_fix_path, 'r', encoding='utf-8') as f:
-                    extreme_script = f.read()
-                driver.execute_script(extreme_script)
-                print("Extreme performance fix loaded - targeting _0xe2830d function")
-        
         # Add refresh blocker
         refresh_blocker_path = os.path.join(current_dir, 'refresh_blocker.js')
         if os.path.exists(refresh_blocker_path):
@@ -506,47 +462,30 @@ def setup_download_qr_interceptor(driver):
             driver.execute_script(refresh_blocker_script)
             print("Refresh blocker configured - F5 and Ctrl/Cmd+R disabled")
         
+        # Add home button injector with base path
+        home_button_path = os.path.join(current_dir, 'home_button_injector.js')
+        if os.path.exists(home_button_path):
+            # Set the base path first
+            driver.execute_script(f"window.veoBasePath = '{current_dir}';")
+            with open(home_button_path, 'r', encoding='utf-8') as f:
+                home_button_script = f.read()
+            driver.execute_script(home_button_script)
+            print("Home button injector configured - will add home button to external pages")
         
-        
-        # Add performance debugging tools if requested
-        if '--debug-performance' in sys.argv:
-            perf_monitor_path = os.path.join(current_dir, 'performance_monitor.js')
-            if os.path.exists(perf_monitor_path):
-                with open(perf_monitor_path, 'r', encoding='utf-8') as f:
-                    perf_script = f.read()
-                driver.execute_script(perf_script)
-                print("Performance monitor loaded - Reports every 10 seconds")
-            
-            script_profiler_path = os.path.join(current_dir, 'script_profiler.js')
-            if os.path.exists(script_profiler_path):
-                with open(script_profiler_path, 'r', encoding='utf-8') as f:
-                    profiler_script = f.read()
-                driver.execute_script(profiler_script)
-                print("Script profiler loaded - Tracks execution times")
-            
-            cpu_detector_path = os.path.join(current_dir, 'cpu_detector.js')
-            if os.path.exists(cpu_detector_path):
-                with open(cpu_detector_path, 'r', encoding='utf-8') as f:
-                    cpu_script = f.read()
-                driver.execute_script(cpu_script)
-                print("CPU detector loaded - Identifies performance bottlenecks")
-        
-        # Add comprehensive debug if requested
-        if '--debug-issues' in sys.argv:
-            debug_all_path = os.path.join(current_dir, 'debug_all_issues.js')
-            if os.path.exists(debug_all_path):
-                with open(debug_all_path, 'r', encoding='utf-8') as f:
-                    debug_script = f.read()
-                driver.execute_script(debug_script)
-                print("Comprehensive debug loaded - Check console for detailed logs")
+        # Add framework function blocker for Windows
+        if platform.system() == 'Windows':
+            framework_blocker_path = os.path.join(current_dir, 'framework_function_blocker.js')
+            if os.path.exists(framework_blocker_path):
+                with open(framework_blocker_path, 'r', encoding='utf-8') as f:
+                    blocker_script = f.read()
+                driver.execute_script(blocker_script)
+                print("Framework function blocker loaded - will block functions >200ms")
         
         print("Press Alt+D to test QR overlay")
         print("Developer tools: Run with --devtools flag to enable")
         print("Debug downloads: Run with --debug-downloads flag")
         print("Debug chat deletion: Run with --debug-chat flag")
         print("Debug video finder: Run with --debug-video flag")
-        print("Debug performance: Run with --debug-performance flag")
-        print("Debug issues: Run with --debug-issues flag")
         print("Kiosk mode: Run with --kiosk flag to test full kiosk mode")
         
     except Exception as e:
@@ -555,14 +494,63 @@ def setup_download_qr_interceptor(driver):
 def hide_flow_ui_elements(driver):
     """Hide UI elements in Google Flow interface"""
     try:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        ui_hider_path = os.path.join(current_dir, 'flow_ui_hider_minimal.js')
+        hide_script = """
+        // Remove any existing hiding styles first
+        const existingStyle = document.getElementById('veo-hiding-styles');
+        if (existingStyle) {
+            existingStyle.remove();
+        }
         
-        if os.path.exists(ui_hider_path):
-            with open(ui_hider_path, 'r', encoding='utf-8') as f:
-                hide_script = f.read()
-            driver.execute_script(hide_script)
-            print("UI elements hidden (minimal CSS)")
+        // Hide elements immediately with a minimal delay
+        setTimeout(() => {
+            // Hide specific elements by searching for them
+            // Hide date dividers
+            const dateElements = document.querySelectorAll('.MqrLh');
+            dateElements.forEach(el => {
+                if (el.textContent.includes('2025년') || el.textContent.includes('월') || el.textContent.includes('일')) {
+                    const container = el.closest('[data-known-size]') || el.parentElement.parentElement;
+                    if (container) container.style.display = 'none';
+                }
+            });
+            
+            // Hide breadcrumb
+            const breadcrumb = document.querySelector('.goSPNE');
+            if (breadcrumb) breadcrumb.style.display = 'none';
+            
+            // Hide top toolbar - but delay to allow mode change
+            setTimeout(() => {
+                const toolbar = document.querySelector('.gxAzIM');
+                if (toolbar) toolbar.style.display = 'none';
+            }, 5000); // Wait 5 seconds before hiding toolbar
+            
+            // Hide profile and buttons
+            const profile = document.querySelector('.gNJurX');
+            if (profile) profile.style.display = 'none';
+            
+            const discord = document.querySelector('a[href*="discord"]');
+            if (discord) discord.style.display = 'none';
+            
+            const help = document.querySelector('a[href*="faq"]');
+            if (help) help.style.display = 'none';
+            
+            // Hide Google Cloud button on top left
+            const googleCloudButton = document.querySelector('.Logo_container__QTJew');
+            if (googleCloudButton) googleCloudButton.style.display = 'none';
+            
+            // Also hide the entire navigation container if it only contains the logo
+            const navContainer = document.querySelector('.Navigation_navigation__K3ZWw');
+            if (navContainer) navContainer.style.display = 'none';
+            
+            // Hide the fixed position control that contains the logo
+            const fixedControl = document.querySelector('.FixedPositionControl_topLeft__LnSf_');
+            if (fixedControl) fixedControl.style.display = 'none';
+            
+            console.log('UI elements hidden selectively');
+        }, 50);
+        """
+        
+        driver.execute_script(hide_script)
+        print("UI elements hidden")
         
     except Exception as e:
         print(f"Error hiding UI elements: {e}")
@@ -572,6 +560,8 @@ def monitor_navigation(driver, credentials):
     current_url = driver.current_url
     flow_clicked = False
     sketch_clicked = False
+    project_url = credentials.get('flow_project_url', '')
+    interceptor_refresh_count = 0
     
     print("Navigation monitoring active")
     
@@ -582,23 +572,6 @@ def monitor_navigation(driver, credentials):
             
             # Check if URL changed
             if new_url != current_url:
-                # Force inject home button on any navigation
-                current_dir = os.path.dirname(os.path.abspath(__file__))
-                home_button_force_path = os.path.join(current_dir, 'home_button_force.js')
-                if os.path.exists(home_button_force_path):
-                    with open(home_button_force_path, 'r', encoding='utf-8') as f:
-                        home_button_script = f.read()
-                    driver.execute_script(home_button_script)
-                    print(f"[NAVIGATION] 홈버튼 강제 주입: {new_url[:50]}...")
-                
-                # Re-inject working fix on Flow pages
-                if "labs.google/fx/ko/tools/flow" in new_url:
-                    working_fix_path = os.path.join(current_dir, 'working_fix.js')
-                    if os.path.exists(working_fix_path):
-                        with open(working_fix_path, 'r', encoding='utf-8') as f:
-                            working_script = f.read()
-                        driver.execute_script(working_script)
-                        print("[NAVIGATION] Working fix 재주입")
                 # Check if navigating to Google Flow project page directly
                 if "labs.google/fx/ko/tools/flow" in new_url and not flow_clicked:
                     print("\n" + "#" * 60)
@@ -628,7 +601,6 @@ def monitor_navigation(driver, credentials):
                             print("[NAVIGATION] \u2713 Mode changed successfully")
                             # Clear the hash from URL
                             driver.execute_script("history.replaceState(null, '', window.location.pathname + window.location.search);")
-                            
                         else:
                             print("[NAVIGATION] \u2717 Failed to change mode")
                     elif requested_mode == 'text':
@@ -636,28 +608,40 @@ def monitor_navigation(driver, credentials):
                     else:
                         print(f"[NAVIGATION] No mode change needed (requested: '{requested_mode}')")
                     
-                    # Only inject scripts that haven't been injected globally
-                    # Hide UI elements (this needs to run per page)
+                    # Setup download QR interceptor
+                    print("[NAVIGATION] Setting up download QR interceptor...")
+                    setup_download_qr_interceptor(driver)
+                    
+                    # Hide UI elements
                     print("[NAVIGATION] Hiding UI elements...")
                     hide_flow_ui_elements(driver)
                     
                     print("#" * 60 + "\n")
                     flow_clicked = True
+                    interceptor_refresh_count = 0
                     
                 # Check if navigating to sketch page
                 elif "gcdemos-25-int-dreamstudio" in new_url and not sketch_clicked:
                     print("Navigated to Sketch to Video page...")
                     time.sleep(2)
                     
-                    # Inject efficient logo hider for sketch page
+                    # Inject persistent logo hider for sketch page
                     current_dir = os.path.dirname(os.path.abspath(__file__))
-                    logo_hider_path = os.path.join(current_dir, 'logo_hider_efficient.js')
+                    logo_hider_path = os.path.join(current_dir, 'persistent_logo_hider.js')
                     if os.path.exists(logo_hider_path):
                         with open(logo_hider_path, 'r', encoding='utf-8') as f:
                             logo_hider_script = f.read()
                         driver.execute_script(logo_hider_script)
-                        print("Injected efficient logo hider for sketch page")
+                        print("Injected logo hider for sketch page")
                     
+                    # Inject home button for sketch page
+                    home_button_path = os.path.join(current_dir, 'home_button_injector.js')
+                    if os.path.exists(home_button_path):
+                        driver.execute_script(f"window.veoBasePath = '{current_dir}';")
+                        with open(home_button_path, 'r', encoding='utf-8') as f:
+                            home_button_script = f.read()
+                        driver.execute_script(home_button_script)
+                        print("Injected home button for sketch page")
                     
                     sketch_clicked = True
                     
@@ -770,19 +754,17 @@ def main():
         if login_to_google(driver, email, password):
             print("Starting application flow...")
             
-            # Console filter already injected in setup_download_qr_interceptor
+            # Inject early console filter IMMEDIATELY
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            early_filter_path = os.path.join(current_dir, 'early_console_filter.js')
+            if os.path.exists(early_filter_path):
+                with open(early_filter_path, 'r', encoding='utf-8') as f:
+                    early_filter_script = f.read()
+                driver.execute_script(early_filter_script)
+                print("Early console filter injected globally")
             
             # Setup download QR interceptor globally
             setup_download_qr_interceptor(driver)
-            
-            # Inject force home button globally
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            home_button_force_path = os.path.join(current_dir, 'home_button_force.js')
-            if os.path.exists(home_button_force_path):
-                with open(home_button_force_path, 'r', encoding='utf-8') as f:
-                    home_button_script = f.read()
-                driver.execute_script(home_button_script)
-                print("홈버튼 강제 주입 시스템 활성화")
             
             show_pg1(driver)
             

@@ -213,30 +213,60 @@ window.showUploadLoadingSpinner = function(downloadButton) {
     spinnerContainer.appendChild(loadingText);
     content.appendChild(spinnerContainer);
     
-    // NO close button - spinner cannot be closed by user
+    // Add close button
+    const closeBtn = document.createElement('button');
+    closeBtn.style.cssText = `
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        color: #5f6368;
+        font-size: 20px;
+        cursor: pointer;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    `;
+    closeBtn.innerHTML = '✕';
+    closeBtn.onmouseover = () => {
+        closeBtn.style.background = 'rgba(0, 0, 0, 0.08)';
+    };
+    closeBtn.onmouseout = () => {
+        closeBtn.style.background = 'transparent';
+    };
+    closeBtn.onclick = () => {
+        dialog.remove();
+        currentDialog = null;
+    };
+    
+    content.appendChild(closeBtn);
     dialog.appendChild(content);
     document.body.appendChild(dialog);
     
     currentDialog = dialog;
     
-    // Prevent closing on background click
+    // Close on background click
     dialog.onclick = (e) => {
         if (e.target === dialog) {
-            e.preventDefault();
-            e.stopPropagation();
-            // Do nothing - spinner must remain visible
+            dialog.remove();
+            currentDialog = null;
         }
     };
     
-    // Prevent closing on Escape key
+    // Close on Escape key
     const handleEscape = (e) => {
         if (e.key === 'Escape') {
-            e.preventDefault();
-            e.stopPropagation();
-            // Do nothing - spinner must remain visible
+            dialog.remove();
+            currentDialog = null;
+            document.removeEventListener('keydown', handleEscape);
         }
     };
-    document.addEventListener('keydown', handleEscape, true);  // Use capture phase to intercept early
+    document.addEventListener('keydown', handleEscape);
     
     // Add spinner animation
     const style = document.createElement('style');
@@ -537,11 +567,60 @@ window.addEventListener('message', (event) => {
     }
 });
 
-// DEPRECATED - Using efficient_upload_monitor.js instead
-// This function is kept for compatibility but should not be used
+// Also check for upload data periodically
 async function checkForUploadComplete() {
-    // Do nothing - replaced by efficient monitor
-    return;
+    // Try multiple ports since the server might be on different ports
+    const ports = [8889, 8890, 8891, 8892];
+    
+    for (const port of ports) {
+        try {
+            const response = await fetch(`http://localhost:${port}/latest_upload.json?` + Date.now());
+            if (response.ok) {
+                const data = await response.json();
+                // Fetched upload data
+                if (data.timestamp) {
+                    // Create unique key for this upload
+                    const uploadKey = `${data.timestamp}_${data.link || 'loading'}`;
+                    
+                    // Check if user has dismissed this upload
+                    if (dismissedUploads.has(uploadKey)) {
+                        // User dismissed this upload
+                        return;
+                    }
+                    
+                    // Check if we've already shown this upload
+                    if (!shownUploads.has(uploadKey)) {
+                        // Check if this is a recent event (within last 30 seconds)
+                        const uploadTime = new Date(data.timestamp);
+                        const now = new Date();
+                        const timeDiff = (now - uploadTime) / 1000; // seconds
+                        // Time diff check
+                        
+                        if (timeDiff < 30) {  // Show uploads from last 30 seconds
+                            shownUploads.add(uploadKey);
+                            lastShownUploadKey = uploadKey;
+                            
+                            if (data.loading) {
+                                // New upload starting - showing spinner
+                                window.showUploadLoadingSpinner();
+                            } else if (data.link) {
+                                // New upload detected
+                                window.showUploadQRDialog(data.link);
+                            }
+                        } else {
+                            // Upload too old
+                        }
+                    } else {
+                        // Already shown this upload
+                    }
+                }
+                // Found working server, no need to try other ports
+                return;
+            }
+        } catch (error) {
+            // Try next port
+        }
+    }
 }
 
 // Clear any existing interval before creating new one
@@ -549,17 +628,8 @@ if (window.uploadCheckInterval) {
     clearInterval(window.uploadCheckInterval);
 }
 
-// DISABLED automatic checking to prevent console spam
-// Only check when download is actually triggered
-// window.uploadCheckInterval = setInterval(checkForUploadComplete, 1000);
-
-// DEPRECATED - startUploadMonitoring is now provided by efficient_upload_monitor.js
-// This is kept for compatibility only
-if (!window.startUploadMonitoring) {
-    window.startUploadMonitoring = function() {
-        console.log('[UPLOAD] Legacy monitoring called - should use efficient monitor');
-    };
-}
+// Check every 1 second for faster response
+window.uploadCheckInterval = setInterval(checkForUploadComplete, 1000);
 
 // Clean up on page unload
 window.addEventListener('beforeunload', () => {
