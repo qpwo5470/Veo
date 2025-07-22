@@ -477,20 +477,19 @@ class OAuthDriveService:
         UploadDataHandler.service = self
         
         try:
-            # Try different ports
-            for port in [8889, 8890, 8891, 8892]:
-                try:
-                    self.web_server = socketserver.TCPServer(('localhost', port), UploadDataHandler)
-                    self.web_port = port
-                    print(f"📡 Web server started on http://localhost:{port}")
-                    
-                    # Store the port for JavaScript
-                    self.update_js_port(port)
-                    
-                    self.web_server.serve_forever()
-                    break
-                except OSError:
-                    continue
+            # Use only port 8888
+            port = 8888
+            try:
+                self.web_server = socketserver.TCPServer(('localhost', port), UploadDataHandler)
+                self.web_port = port
+                print(f"📡 Web server started on http://localhost:{port}")
+                
+                # Store the port for JavaScript
+                self.update_js_port(port)
+                
+                self.web_server.serve_forever()
+            except OSError as e:
+                print(f"Error: Could not start server on port {port} - {e}")
         except Exception as e:
             print(f"Web server error: {e}")
     

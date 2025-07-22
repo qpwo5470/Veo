@@ -1,8 +1,8 @@
 // Dynamic upload handler - uses the correct port from service
 console.log('[DYNAMIC UPLOAD] Handler starting...');
 
-// Get port from window variable set by Python
-const UPLOAD_PORT = window._veoUploadPort || 8889;
+// Use only port 8888
+const UPLOAD_PORT = 8888;
 console.log(`[DYNAMIC UPLOAD] Using port ${UPLOAD_PORT}`);
 
 // Check for uploaded files periodically

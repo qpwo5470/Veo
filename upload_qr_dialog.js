@@ -569,13 +569,12 @@ window.addEventListener('message', (event) => {
 
 // Also check for upload data periodically
 async function checkForUploadComplete() {
-    // Try multiple ports since the server might be on different ports
-    const ports = [8889, 8890, 8891, 8892];
+    // Use only port 8888
+    const port = 8888;
     
-    for (const port of ports) {
-        try {
-            const response = await fetch(`http://localhost:${port}/latest_upload.json?` + Date.now());
-            if (response.ok) {
+    try {
+        const response = await fetch(`http://localhost:${port}/latest_upload.json?` + Date.now());
+        if (response.ok) {
                 const data = await response.json();
                 // Fetched upload data
                 if (data.timestamp) {
@@ -614,14 +613,11 @@ async function checkForUploadComplete() {
                         // Already shown this upload
                     }
                 }
-                // Found working server, no need to try other ports
-                return;
             }
         } catch (error) {
-            // Try next port
+            // Server not responding on port 8888
         }
     }
-}
 
 // Clear any existing interval before creating new one
 if (window.uploadCheckInterval) {

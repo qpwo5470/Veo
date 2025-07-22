@@ -30,9 +30,6 @@
                message.includes('api call') ||
                message.includes('http') ||
                message.includes('8888') ||
-               message.includes('8889') ||
-               message.includes('8890') ||
-               message.includes('8881') ||
                message.includes('localhost') ||
                message.includes('127.0.0.1') ||
                message.includes(':88') ||

@@ -20,7 +20,7 @@
     // List of keywords to filter
     const filterKeywords = [
         'fetch', 'xhr', 'network', 'request', 'http', 'https',
-        '8888', '8889', '8890', '8881', ':88', 'port',
+        '8888', ':8888', 'port',
         'localhost', '127.0.0.1', '0.0.0.0',
         'download', 'upload', 'drive.google', 'drum.usercontent',
         'GET ', 'POST ', 'PUT ', 'DELETE ', 'OPTIONS ', 'HEAD ',
