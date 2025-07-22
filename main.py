@@ -417,10 +417,17 @@ def setup_download_qr_interceptor(driver):
         # Add upload QR dialog handler FIRST (before simple_download_monitor)
         upload_qr_path = os.path.join(current_dir, 'upload_qr_dialog.js')
         if os.path.exists(upload_qr_path):
+            # Check if oauth service is running
+            if not oauth_service:
+                # Disable upload monitoring if service is not available
+                driver.execute_script("window.disableUploadMonitoring = true;")
             with open(upload_qr_path, 'r', encoding='utf-8') as f:
                 upload_qr_script = f.read()
             driver.execute_script(upload_qr_script)
-            print("Upload QR dialog configured - will show QR code after Google Drive uploads")
+            if oauth_service:
+                print("Upload QR dialog configured - will show QR code after Google Drive uploads")
+            else:
+                print("Upload QR dialog configured - monitoring disabled (no upload service)")
         
         # NOW load the full simple download monitor (which uses showUploadLoadingSpinner)
         simple_monitor_path = os.path.join(current_dir, 'simple_download_monitor.js')

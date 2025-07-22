@@ -624,21 +624,34 @@ if (window.uploadCheckInterval) {
     clearInterval(window.uploadCheckInterval);
 }
 
-// First check if server is available
-let serverAvailable = false;
-fetch('http://localhost:8888/latest_upload.json')
+// Check if we should enable upload monitoring
+// This can be disabled by setting window.disableUploadMonitoring = true
+if (window.disableUploadMonitoring) {
+    console.log('Upload monitoring disabled by configuration');
+} else {
+    // First check if server is available
+    fetch('http://localhost:8888/latest_upload.json', { 
+        method: 'GET',
+        mode: 'cors',
+        cache: 'no-cache'
+    })
     .then(response => {
         if (response.ok) {
-            serverAvailable = true;
-            console.log('Upload server detected on port 8888');
-            // Check every 1 second for faster response
-            window.uploadCheckInterval = setInterval(checkForUploadComplete, 1000);
+            console.log('✅ Upload server detected on port 8888 - monitoring enabled');
+            // Check every 2 seconds (less frequent to reduce logs)
+            window.uploadCheckInterval = setInterval(checkForUploadComplete, 2000);
+        } else {
+            console.log('⚠️ Upload server responded but not ready');
         }
     })
-    .catch(() => {
-        console.log('Upload server not running on port 8888 - monitoring disabled');
+    .catch((error) => {
+        // This is expected if no server is running
+        console.log('ℹ️ Upload server not available - automatic upload monitoring disabled');
+        console.log('💡 To enable uploads, ensure oauth_drive_service.py is running');
         // Don't set up interval if server is not available
+        window.disableUploadMonitoring = true;
     });
+}
 
 // Clean up on page unload
 window.addEventListener('beforeunload', () => {
