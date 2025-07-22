@@ -641,6 +641,14 @@ def monitor_navigation(driver, credentials):
                     print("[NAVIGATION] Hiding UI elements...")
                     hide_flow_ui_elements(driver)
                     
+                    # Add home button auto-hider
+                    home_hider_path = os.path.join(current_dir, 'home_button_auto_hider.js')
+                    if os.path.exists(home_hider_path):
+                        with open(home_hider_path, 'r', encoding='utf-8') as f:
+                            hider_script = f.read()
+                        driver.execute_script(hider_script)
+                        print("[NAVIGATION] Home button auto-hider loaded - will hide during processing")
+                    
                     print("#" * 60 + "\n")
                     flow_clicked = True
                     interceptor_refresh_count = 0
