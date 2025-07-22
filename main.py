@@ -497,6 +497,14 @@ def setup_download_qr_interceptor(driver):
             driver.execute_script(home_button_script)
             print("Home button injector configured - will add home button to external pages")
         
+        # Add Veo 2 auto-switcher globally
+        veo2_switcher_path = os.path.join(current_dir, 'veo2_auto_switcher.js')
+        if os.path.exists(veo2_switcher_path):
+            with open(veo2_switcher_path, 'r', encoding='utf-8') as f:
+                veo2_script = f.read()
+            driver.execute_script(veo2_script)
+            print("Veo 2 auto-switcher configured - will auto-click quality switch button")
+        
         # Framework function blocker disabled
         # if platform.system() == 'Windows':
         #     aggressive_blocker_path = os.path.join(current_dir, 'aggressive_framework_blocker.js')
@@ -519,12 +527,23 @@ def setup_download_qr_interceptor(driver):
 def hide_flow_ui_elements(driver):
     """Hide UI elements in Google Flow interface"""
     try:
+        # First check if we're in image/asset mode
+        mode_check_script = """
+        return sessionStorage.getItem('veo_flow_mode') || 
+               (window.location.hash.includes('veo_mode=asset') ? 'asset' : 'text');
+        """
+        current_mode = driver.execute_script(mode_check_script)
+        
         hide_script = """
         // Remove any existing hiding styles first
         const existingStyle = document.getElementById('veo-hiding-styles');
         if (existingStyle) {
             existingStyle.remove();
         }
+        
+        // Check if we're in image/asset mode
+        const isImageMode = sessionStorage.getItem('veo_flow_mode') === 'asset' ||
+                          window.location.hash.includes('veo_mode=asset');
         
         // Hide elements immediately with a minimal delay
         setTimeout(() => {
@@ -542,11 +561,14 @@ def hide_flow_ui_elements(driver):
             const breadcrumb = document.querySelector('.goSPNE');
             if (breadcrumb) breadcrumb.style.display = 'none';
             
-            // Hide top toolbar - but delay to allow mode change
-            setTimeout(() => {
+            // Hide top toolbar immediately in text mode, preserve in image mode
+            if (!isImageMode) {
                 const toolbar = document.querySelector('.gxAzIM');
                 if (toolbar) toolbar.style.display = 'none';
-            }, 5000); // Wait 5 seconds before hiding toolbar
+                console.log('Hiding toolbar immediately (text mode)');
+            } else {
+                console.log('Preserving toolbar buttons (image mode)');
+            }
             
             // Hide profile and buttons
             const profile = document.querySelector('.gNJurX');
@@ -570,7 +592,7 @@ def hide_flow_ui_elements(driver):
             const fixedControl = document.querySelector('.FixedPositionControl_topLeft__LnSf_');
             if (fixedControl) fixedControl.style.display = 'none';
             
-            console.log('UI elements hidden selectively');
+            console.log('UI elements hidden selectively. Mode:', isImageMode ? 'image' : 'text');
         }, 50);
         """
         
@@ -595,95 +617,121 @@ def monitor_navigation(driver, credentials):
             time.sleep(0.1)
             new_url = driver.current_url
             
-            # Check if URL changed
+            # Check if URL changed (ignore minor hash changes)
             if new_url != current_url:
-                # Check if navigating to Google Flow project page directly
-                if "labs.google/fx/ko/tools/flow" in new_url and not flow_clicked:
-                    print("\n" + "#" * 60)
-                    print("[NAVIGATION] Navigated to Google Flow project")
-                    print(f"[NAVIGATION] URL: {new_url}")
-                    print("#" * 60)
-                    
-                    # Check URL hash for mode
-                    requested_mode = None
-                    if '#veo_mode=' in new_url:
-                        try:
-                            hash_part = new_url.split('#veo_mode=')[1]
-                            requested_mode = hash_part.split('&')[0]  # In case there are other params
-                            print(f"[NAVIGATION] Mode from URL hash: '{requested_mode}'")
-                        except:
-                            print("[NAVIGATION] Error parsing URL hash")
-                    
-                    # Also check session storage as fallback
-                    if not requested_mode:
-                        requested_mode = driver.execute_script("return sessionStorage.getItem('veo_flow_mode');")
-                        print(f"[NAVIGATION] Mode from session storage: '{requested_mode}'")
-                    
-                    if requested_mode == 'asset':
-                        print("[NAVIGATION] \u2192 Asset mode requested, initiating mode change...")
-                        # Use Python Selenium to change mode
-                        if wait_and_change_mode(driver):
-                            print("[NAVIGATION] \u2713 Mode changed successfully")
-                            # Clear the hash from URL
-                            driver.execute_script("history.replaceState(null, '', window.location.pathname + window.location.search);")
-                        else:
-                            print("[NAVIGATION] \u2717 Failed to change mode")
-                    elif requested_mode == 'text':
-                        print("[NAVIGATION] Text mode requested (default mode, no change needed)")
-                    else:
-                        print(f"[NAVIGATION] No mode change needed (requested: '{requested_mode}')")
-                    
-                    # Setup download QR interceptor
-                    print("[NAVIGATION] Setting up download QR interceptor...")
-                    setup_download_qr_interceptor(driver)
-                    
-                    # Hide UI elements
-                    print("[NAVIGATION] Hiding UI elements...")
-                    hide_flow_ui_elements(driver)
-                    
-                    # Add home button auto-hider
-                    home_hider_path = os.path.join(current_dir, 'home_button_auto_hider.js')
-                    if os.path.exists(home_hider_path):
-                        with open(home_hider_path, 'r', encoding='utf-8') as f:
-                            hider_script = f.read()
-                        driver.execute_script(hider_script)
-                        print("[NAVIGATION] Home button auto-hider loaded - will hide during processing")
-                    
-                    print("#" * 60 + "\n")
-                    flow_clicked = True
-                    interceptor_refresh_count = 0
-                    
-                # Check if navigating to sketch page
-                elif "gcdemos-25-int-dreamstudio" in new_url and not sketch_clicked:
-                    print("Navigated to Sketch to Video page...")
-                    time.sleep(2)
-                    
-                    # Inject persistent logo hider for sketch page
-                    current_dir = os.path.dirname(os.path.abspath(__file__))
-                    logo_hider_path = os.path.join(current_dir, 'persistent_logo_hider.js')
-                    if os.path.exists(logo_hider_path):
-                        with open(logo_hider_path, 'r', encoding='utf-8') as f:
-                            logo_hider_script = f.read()
-                        driver.execute_script(logo_hider_script)
-                        print("Injected logo hider for sketch page")
-                    
-                    # Inject home button for sketch page
-                    home_button_path = os.path.join(current_dir, 'home_button_injector.js')
-                    if os.path.exists(home_button_path):
-                        driver.execute_script(f"window.veoBasePath = '{current_dir}';")
-                        with open(home_button_path, 'r', encoding='utf-8') as f:
-                            home_button_script = f.read()
-                        driver.execute_script(home_button_script)
-                        print("Injected home button for sketch page")
-                    
-                    sketch_clicked = True
-                    
-                elif "labs.google/fx/ko/tools/flow" not in new_url:
-                    flow_clicked = False  # Reset when navigating away
-                    
-                elif "gcdemos-25-int-dreamstudio" not in new_url:
-                    sketch_clicked = False  # Reset when navigating away
+                # Extract base URL without hash for comparison
+                current_base = current_url.split('#')[0]
+                new_base = new_url.split('#')[0]
                 
+                # Only process if base URL changed or this is first time on Flow
+                if new_base != current_base:
+                    # Check if navigating to Google Flow project page directly
+                    if "labs.google/fx/ko/tools/flow" in new_url and not flow_clicked:
+                        print("\n" + "#" * 60)
+                        print("[NAVIGATION] Navigated to Google Flow project")
+                        print(f"[NAVIGATION] URL: {new_url}")
+                        print("#" * 60)
+                        
+                        # Check URL hash for mode
+                        requested_mode = None
+                        if '#veo_mode=' in new_url:
+                            try:
+                                hash_part = new_url.split('#veo_mode=')[1]
+                                requested_mode = hash_part.split('&')[0]  # In case there are other params
+                                print(f"[NAVIGATION] Mode from URL hash: '{requested_mode}'")
+                            except:
+                                print("[NAVIGATION] Error parsing URL hash")
+                        
+                        # Also check session storage as fallback
+                        if not requested_mode:
+                            requested_mode = driver.execute_script("return sessionStorage.getItem('veo_flow_mode');")
+                            print(f"[NAVIGATION] Mode from session storage: '{requested_mode}'")
+                        
+                        if requested_mode == 'asset':
+                            print("[NAVIGATION] \u2192 Asset mode requested, initiating mode change...")
+                            # Use Python Selenium to change mode
+                            if wait_and_change_mode(driver):
+                                print("[NAVIGATION] \u2713 Mode changed successfully")
+                                # Clear the hash from URL
+                                driver.execute_script("history.replaceState(null, '', window.location.pathname + window.location.search);")
+                            else:
+                                print("[NAVIGATION] \u2717 Failed to change mode")
+                        elif requested_mode == 'text':
+                            print("[NAVIGATION] Text mode requested (default mode, no change needed)")
+                        else:
+                            print(f"[NAVIGATION] No mode change needed (requested: '{requested_mode}')")
+                        
+                        # Setup download QR interceptor
+                        print("[NAVIGATION] Setting up download QR interceptor...")
+                        setup_download_qr_interceptor(driver)
+                        
+                        # Hide UI elements
+                        print("[NAVIGATION] Hiding UI elements...")
+                        hide_flow_ui_elements(driver)
+                        
+                        # Add home button auto-hider
+                        current_dir = os.path.dirname(os.path.abspath(__file__))
+                        home_hider_path = os.path.join(current_dir, 'home_button_auto_hider.js')
+                        if os.path.exists(home_hider_path):
+                            with open(home_hider_path, 'r', encoding='utf-8') as f:
+                                hider_script = f.read()
+                            driver.execute_script(hider_script)
+                            print("[NAVIGATION] Home button auto-hider loaded - will hide during processing")
+                        
+                        # Add Veo 2 auto-switcher
+                        veo2_switcher_path = os.path.join(current_dir, 'veo2_auto_switcher.js')
+                        if os.path.exists(veo2_switcher_path):
+                            with open(veo2_switcher_path, 'r', encoding='utf-8') as f:
+                                veo2_script = f.read()
+                            driver.execute_script(veo2_script)
+                            print("[NAVIGATION] Veo 2 auto-switcher loaded - will auto-click 'Switch to Veo 2 - Quality' button")
+                        
+                        # Add image mode UI preserver (for asset/image mode)
+                        if requested_mode == 'asset':
+                            preserver_path = os.path.join(current_dir, 'image_mode_ui_preserver.js')
+                            if os.path.exists(preserver_path):
+                                with open(preserver_path, 'r', encoding='utf-8') as f:
+                                    preserver_script = f.read()
+                                driver.execute_script(preserver_script)
+                                print("[NAVIGATION] Image mode UI preserver loaded - input box buttons will be preserved")
+                        
+                        print("#" * 60 + "\n")
+                        flow_clicked = True
+                        interceptor_refresh_count = 0
+                    
+                    # Check if navigating to sketch page
+                    elif "gcdemos-25-int-dreamstudio" in new_url and not sketch_clicked:
+                        print("Navigated to Sketch to Video page...")
+                        time.sleep(2)
+                    
+                        # Inject persistent logo hider for sketch page
+                        current_dir = os.path.dirname(os.path.abspath(__file__))
+                        logo_hider_path = os.path.join(current_dir, 'persistent_logo_hider.js')
+                        if os.path.exists(logo_hider_path):
+                            with open(logo_hider_path, 'r', encoding='utf-8') as f:
+                                logo_hider_script = f.read()
+                            driver.execute_script(logo_hider_script)
+                            print("Injected logo hider for sketch page")
+                        
+                        # Inject home button for sketch page
+                        home_button_path = os.path.join(current_dir, 'home_button_injector.js')
+                        if os.path.exists(home_button_path):
+                            driver.execute_script(f"window.veoBasePath = '{current_dir}';")
+                            with open(home_button_path, 'r', encoding='utf-8') as f:
+                                home_button_script = f.read()
+                            driver.execute_script(home_button_script)
+                            print("Injected home button for sketch page")
+                        
+                        sketch_clicked = True
+                    
+                    # Reset flags when navigating away from specific pages
+                    else:
+                        if "labs.google/fx/ko/tools/flow" not in new_url:
+                            flow_clicked = False
+                        if "gcdemos-25-int-dreamstudio" not in new_url:
+                            sketch_clicked = False
+                
+                # Update current URL after processing
                 current_url = new_url
             
             # Check if home button was clicked by checking for navigation signals

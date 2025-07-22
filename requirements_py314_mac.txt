@@ -1,0 +1,51 @@
+# Requirements for Python 3.14 on macOS
+# Generated for Veo application
+# Note: Python 3.14 compatibility - using latest stable versions without strict upper bounds
+
+# Core Web Automation
+selenium>=4.15.2
+webdriver-manager>=4.0.2
+
+# HTTP and Networking
+requests>=2.31.0
+urllib3>=2.0.0
+
+# Google APIs and Authentication
+google-api-python-client>=2.108.0
+google-auth>=2.23.4
+google-auth-httplib2>=0.1.1
+google-auth-oauthlib>=1.1.0
+googleapis-common-protos>=1.60.0
+
+# Web Framework (for OAuth callback server)
+Flask>=3.0.0
+Flask-Cors>=4.0.0
+Werkzeug>=3.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+pathlib>=1.0.1  # Built-in since Python 3.4, but included for completeness
+
+# Build and Packaging (optional, for creating executables)
+# Note: PyInstaller may need updates for Python 3.14 compatibility
+# pyinstaller>=6.3.0  # Uncomment when Python 3.14 support is confirmed
+
+# Development dependencies (optional)
+# pytest>=7.4.0
+# pytest-cov>=4.1.0
+# black>=23.0.0
+# flake8>=6.0.0
+
+# Platform-specific notes for macOS:
+# - Ensure Chrome/Chromium is installed for Selenium
+# - May need to install certificates: pip install --upgrade certifi
+# - For M1/M2 Macs, some packages may need Rosetta 2 or ARM64 versions
+
+# Installation command:
+# pip install -r requirements_py314_mac.txt
+
+# For development environment setup:
+# python -m venv venv
+# source venv/bin/activate  # On macOS/Linux
+# pip install --upgrade pip
+# pip install -r requirements_py314_mac.txt

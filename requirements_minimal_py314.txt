@@ -1,0 +1,22 @@
+# Minimal Requirements for Python 3.14 on macOS
+# Essential dependencies only
+
+# Web Automation
+selenium>=4.15.2
+webdriver-manager>=4.0.2
+
+# HTTP Requests
+requests>=2.31.0
+
+# Google Drive Integration (optional - comment out if not using Drive features)
+google-api-python-client>=2.108.0
+google-auth>=2.23.4
+google-auth-oauthlib>=1.1.0
+
+# Configuration
+python-dotenv>=1.0.0
+
+# Note: This minimal setup excludes Flask and build tools
+# Add them back if needed:
+# Flask>=3.0.0
+# Flask-Cors>=4.0.0

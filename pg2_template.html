@@ -1,5 +1,3 @@
-<!-- This file is auto-generated from pg2_template.html. Do not edit directly. -->
-<!-- To make changes, edit pg2_template.html instead. -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -176,8 +174,8 @@
             });
         });
         
-        // Embed the project URL directly
-        const FLOW_PROJECT_URL = 'https://labs.google/fx/ko/tools/flow/project/0ed009de-b58e-4a12-877b-fdae52c11aae';
+        // Project URL will be injected by Python
+        const FLOW_PROJECT_URL = '{{FLOW_PROJECT_URL}}';
         
         function goToHome() {
             window.location.href = 'pg1.html';

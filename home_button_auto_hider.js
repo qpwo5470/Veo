@@ -20,41 +20,88 @@
     
     // Function to check for percentage on screen
     function hasPercentageOnScreen() {
-        // Method 1: Look for elements with percentage text
-        const allElements = document.querySelectorAll('*');
-        for (const element of allElements) {
-            // Check text content
-            const text = element.textContent?.trim() || '';
+        // Method 1: Look for any element containing percentage
+        const allElements = document.getElementsByTagName('*');
+        for (let i = 0; i < allElements.length; i++) {
+            const element = allElements[i];
             
-            // Match percentage patterns like "16%", "100%", etc.
-            if (/^\d{1,3}%$/.test(text) && element.childElementCount === 0) {
-                // Verify it's visible
-                const rect = element.getBoundingClientRect();
-                if (rect.width > 0 && rect.height > 0) {
-                    console.log('Found percentage:', text, element.className);
-                    return true;
+            // Skip script and style tags
+            if (element.tagName === 'SCRIPT' || element.tagName === 'STYLE') continue;
+            
+            // Get direct text content (not from children)
+            let text = '';
+            for (let j = 0; j < element.childNodes.length; j++) {
+                const node = element.childNodes[j];
+                if (node.nodeType === Node.TEXT_NODE) {
+                    text += node.textContent;
+                }
+            }
+            
+            text = text.trim();
+            
+            // Check if it contains percentage
+            if (text && /\d+%/.test(text)) {
+                // Make sure element is visible
+                const style = window.getComputedStyle(element);
+                if (style.display !== 'none' && 
+                    style.visibility !== 'hidden' && 
+                    style.opacity !== '0') {
+                    
+                    const rect = element.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        console.log('🎯 Found percentage:', text, 'in', element.className || element.tagName);
+                        return true;
+                    }
                 }
             }
         }
         
-        // Method 2: Check for specific class patterns that might contain percentages
+        // Method 2: Check specific selectors for Google's UI
         const percentageSelectors = [
+            // Styled components patterns
+            'div[class*="sc-"]',
+            'span[class*="sc-"]',
+            // Common progress/loading patterns
             '[class*="progress"]',
             '[class*="percent"]',
             '[class*="loading"]',
-            '.krAKfQ', // The specific class from the example
-            'div[class*="sc-"][class*="-1"]' // Common pattern for styled-components
+            '[class*="status"]',
+            // Specific classes from example
+            '.krAKfQ',
+            // Any div that might contain percentage
+            'div:not(:empty)',
+            'span:not(:empty)'
         ];
         
         for (const selector of percentageSelectors) {
-            const elements = document.querySelectorAll(selector);
-            for (const el of elements) {
-                const text = el.textContent?.trim() || '';
-                if (/\d+%/.test(text)) {
-                    console.log('Found percentage in selector:', selector, text);
-                    return true;
+            try {
+                const elements = document.querySelectorAll(selector);
+                for (const el of elements) {
+                    const text = el.textContent?.trim() || '';
+                    // More flexible percentage matching
+                    if (/\d{1,3}\s*%/.test(text) || /^\d{1,3}%$/.test(text)) {
+                        // Double check visibility
+                        const rect = el.getBoundingClientRect();
+                        if (rect.top >= 0 && rect.left >= 0 && 
+                            rect.bottom <= window.innerHeight && 
+                            rect.right <= window.innerWidth &&
+                            rect.width > 0 && rect.height > 0) {
+                            console.log('🎯 Found percentage via selector:', selector, text);
+                            return true;
+                        }
+                    }
                 }
+            } catch (e) {
+                // Ignore selector errors
             }
+        }
+        
+        // Method 3: Check for percentage in page text
+        const bodyText = document.body.innerText || document.body.textContent || '';
+        const percentageMatch = bodyText.match(/\b\d{1,3}%/);
+        if (percentageMatch) {
+            console.log('🎯 Found percentage in page text:', percentageMatch[0]);
+            return true;
         }
         
         return false;
@@ -102,8 +149,17 @@
         // Initial check
         updateHomeButtonVisibility();
         
-        // Check periodically
-        setInterval(updateHomeButtonVisibility, 500);
+        // Check more frequently during active periods
+        let checkInterval = 250; // Check every 250ms
+        setInterval(updateHomeButtonVisibility, checkInterval);
+        
+        // Also add debug logging
+        setInterval(() => {
+            const hasPercent = hasPercentageOnScreen();
+            if (hasPercent) {
+                console.log('🔍 Percentage detection active - home button should be hidden');
+            }
+        }, 2000);
         
         // Also monitor DOM changes
         const observer = new MutationObserver((mutations) => {
