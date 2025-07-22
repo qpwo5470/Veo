@@ -1,0 +1,18 @@
+/* Efficient UI hiding for Flow pages */
+.MqrLh:has-text("2025년"), 
+.MqrLh:has-text("월"), 
+.MqrLh:has-text("일"),
+.goSPNE, 
+.gNJurX, 
+a[href*="discord"], 
+a[href*="faq"],
+.Logo_container__QTJew, 
+.Navigation_navigation__K3ZWw,
+.FixedPositionControl_topLeft__LnSf_ {
+    display: none !important;
+}
+
+/* Hide toolbar after delay - handled by JavaScript */
+.gxAzIM.delayed-hide {
+    display: none !important;
+}
