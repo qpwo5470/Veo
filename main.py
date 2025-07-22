@@ -445,6 +445,14 @@ def setup_download_qr_interceptor(driver):
             driver.execute_script(chat_deleter_script)
             print("Chat deleter configured - will delete chats before going home")
         
+        # Add video controls remover
+        video_controls_path = os.path.join(current_dir, 'video_controls_remover.js')
+        if os.path.exists(video_controls_path):
+            with open(video_controls_path, 'r', encoding='utf-8') as f:
+                video_controls_script = f.read()
+            driver.execute_script(video_controls_script)
+            print("Video controls remover configured - will continuously remove video control divs")
+        
         # Add debug chat deleter if requested
         if '--debug-chat' in sys.argv:
             debug_chat_path = os.path.join(current_dir, 'debug_chat_deleter.js')
