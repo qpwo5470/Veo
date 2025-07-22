@@ -357,14 +357,23 @@ def setup_download_qr_interceptor(driver):
         # Get current directory
         current_dir = os.path.dirname(os.path.abspath(__file__))
         
-        # Add innerHTML patcher for Windows Trusted Types
+        # Add Windows-specific fixes
         if platform.system() == 'Windows':
+            # innerHTML patcher for Trusted Types
             patcher_path = os.path.join(current_dir, 'innerHTML_patcher.js')
             if os.path.exists(patcher_path):
                 with open(patcher_path, 'r', encoding='utf-8') as f:
                     patcher_script = f.read()
                 driver.execute_script(patcher_script)
                 print("innerHTML patcher applied for Windows Trusted Types")
+            
+            # Suppress network errors for localhost:8888
+            suppress_errors_path = os.path.join(current_dir, 'suppress_network_errors.js')
+            if os.path.exists(suppress_errors_path):
+                with open(suppress_errors_path, 'r', encoding='utf-8') as f:
+                    suppress_script = f.read()
+                driver.execute_script(suppress_script)
+                print("Network error suppression active - localhost:8888 errors hidden")
         
         # Add EARLY console filter first to suppress ALL network logs
         early_filter_path = os.path.join(current_dir, 'early_console_filter.js')

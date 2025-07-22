@@ -624,8 +624,21 @@ if (window.uploadCheckInterval) {
     clearInterval(window.uploadCheckInterval);
 }
 
-// Check every 1 second for faster response
-window.uploadCheckInterval = setInterval(checkForUploadComplete, 1000);
+// First check if server is available
+let serverAvailable = false;
+fetch('http://localhost:8888/latest_upload.json')
+    .then(response => {
+        if (response.ok) {
+            serverAvailable = true;
+            console.log('Upload server detected on port 8888');
+            // Check every 1 second for faster response
+            window.uploadCheckInterval = setInterval(checkForUploadComplete, 1000);
+        }
+    })
+    .catch(() => {
+        console.log('Upload server not running on port 8888 - monitoring disabled');
+        // Don't set up interval if server is not available
+    });
 
 // Clean up on page unload
 window.addEventListener('beforeunload', () => {
